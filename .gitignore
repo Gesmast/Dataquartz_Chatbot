@@ -1,0 +1,18 @@
+# Sensitive keys
+.env
+openai_key.env
+
+# Local Environment
+__pycache__/
+.ipynb_checkpoints/
+.streamlit/config.toml
+
+# Knowledge Base & DB 
+# (Keep these ignored if you want a fresh start on the cloud)
+# (Remove them from here if you want to upload your current local knowledge to GitHub)
+vector_stores/
+dataquartz.db
+knowledge_base/*.pdf
+.venv/
+venv/
+ENV/
