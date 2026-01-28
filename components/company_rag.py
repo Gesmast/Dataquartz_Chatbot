@@ -79,7 +79,7 @@ class CompanyKnowledgeBase:
         samples = vectorstore.similarity_search("Topics summary", k=3)
         combined_text = "\n".join([s.page_content[:500] for s in samples])
         
-        prompt = f"Summarize the core topics covered in these snippets in 2 sentences for an AI router: {combined_text}"
+        prompt = f"Summarize the core topics covered in these snippets for an AI router: {combined_text}"
         summary = self.llm.invoke(prompt).content
         
         with open(self.manifest_path, "w") as f:
