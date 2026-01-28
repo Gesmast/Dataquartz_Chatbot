@@ -66,24 +66,35 @@ class CompanyKnowledgeBase:
             return json.load(f).get("summary", "")
 
     def update_manifest(self):
-        """
-        AUTO-SUMMARY: Reads the vector store and updates the manifest.
-        This allows the Router to know what's in the KB without a full search.
-        """
-        if not self.db_path.exists(): return
-        
-        vectorstore = FAISS.load_local(
-            str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
-        )
-        # Sample content for the map
-        samples = vectorstore.similarity_search("Topics summary", k=3)
-        combined_text = "\n".join([s.page_content[:500] for s in samples])
-        
-        prompt = f"Summarize the core topics covered in these snippets for an AI router: {combined_text}"
-        summary = self.llm.invoke(prompt).content
-        
-        with open(self.manifest_path, "w") as f:
-            json.dump({"summary": summary, "updated": str(datetime.now())}, f)
+       """
+    DETAILED CATALOGING: Creates an indexed list of topics found in the KB.
+    """
+    if not self.db_path.exists(): return
+    
+    vectorstore = FAISS.load_local(
+        str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
+    )
+    
+    # We take more samples (k=6) to see a wider variety of topics
+    samples = vectorstore.similarity_search("List all different topics and services", k=6)
+    combined_text = "\n".join([s.page_content[:600] for s in samples])
+    
+    # NEW PROMPT: Asks for a descriptive list
+    prompt = f"""
+    Analyze these snippets from a company's private documents:
+    {combined_text}
+    
+    Create a 'Knowledge Map' for an AI Router. 
+    List every unique topic found. For each topic, provide a 1-sentence description.
+    Format:
+    - [Topic Name]: [What it covers]
+    
+    If the snippets cover multiple unrelated areas, list them all clearly.
+    """
+    summary = self.llm.invoke(prompt).content
+    
+    with open(self.manifest_path, "w") as f:
+        json.dump({"summary": summary, "updated": str(datetime.now())}, f)
 
     def index_documents(self):
         """Processes raw PDFs and builds the searchable Vector Database."""
@@ -136,17 +147,29 @@ class CompanyKnowledgeBase:
         decision_resp = self.llm.invoke(router_prompt).content.strip().upper()
 
         # 3. Retrieval Path
-        context = ""
-        docs = []
         if "YES" in decision_resp and self.db_path.exists():
-            vectorstore = FAISS.load_local(
-                str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
-            )
-            # Search the vector DB using the user's latest question
-            docs = vectorstore.as_retriever(search_kwargs={"k": 3}).invoke(user_question)
-            context = "\n".join([d.page_content for d in docs])
-        else:
-            context = "Use general knowledge or the conversation history provided below."
+    vectorstore = FAISS.load_local(
+        str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
+    )
+    
+    #  DYNAMIC RETRIEVAL:
+    #  we ask for k=5 but filter by 'relevance score'
+    # This ensures we only get paragraphs that actually match.
+    retriever = vectorstore.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={
+            "k": 5, 
+            "score_threshold": 0.5  # Only takes paragraphs that are at least 50% relevant
+        }
+    )
+    
+    docs = retriever.invoke(user_question)
+    
+    # If the threshold was too strict and got 0 docs, fallback to a standard search
+    if not docs:
+        docs = vectorstore.similarity_search(user_question, k=2)
+
+    context = "\n\n---\n\n".join([d.page_content for d in docs])
 
         # 4. Tone & Personality Application
         personality = self._get_personality()
