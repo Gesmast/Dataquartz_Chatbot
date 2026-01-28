@@ -44,10 +44,7 @@ class CompanyKnowledgeBase:
         )
 
     def _get_personality(self):
-        """
-        DATABASE LOOKUP: Fetches the custom tone set by the Admin.
-        This ensures the AI sounds like a peer, a professional, or a formal assistant.
-        """
+        """DATABASE LOOKUP: Fetches the custom tone set by the Admin."""
         try:
             conn = sqlite3.connect("dataquartz.db")
             cursor = conn.cursor()
@@ -66,35 +63,33 @@ class CompanyKnowledgeBase:
             return json.load(f).get("summary", "")
 
     def update_manifest(self):
-       """
-    DETAILED CATALOGING: Creates an indexed list of topics found in the KB.
-    """
-    if not self.db_path.exists(): return
-    
-    vectorstore = FAISS.load_local(
-        str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
-    )
-    
-    # We take more samples (k=6) to see a wider variety of topics
-    samples = vectorstore.similarity_search("List all different topics and services", k=6)
-    combined_text = "\n".join([s.page_content[:600] for s in samples])
-    
-    # NEW PROMPT: Asks for a descriptive list
-    prompt = f"""
-    Analyze these snippets from a company's private documents:
-    {combined_text}
-    
-    Create a 'Knowledge Map' for an AI Router. 
-    List every unique topic found. For each topic, provide a 1-sentence description.
-    Format:
-    - [Topic Name]: [What it covers]
-    
-    If the snippets cover multiple unrelated areas, list them all clearly.
-    """
-    summary = self.llm.invoke(prompt).content
-    
-    with open(self.manifest_path, "w") as f:
-        json.dump({"summary": summary, "updated": str(datetime.now())}, f)
+        """DETAILED CATALOGING: Creates an indexed list of topics found in the KB."""
+        if not self.db_path.exists(): 
+            return
+        
+        vectorstore = FAISS.load_local(
+            str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
+        )
+        
+        # Sample k=6 for a broader view of company topics
+        samples = vectorstore.similarity_search("List all different topics and services", k=6)
+        combined_text = "\n".join([s.page_content[:600] for s in samples])
+        
+        prompt = f"""
+        Analyze these snippets from a company's private documents:
+        {combined_text}
+        
+        Create a 'Knowledge Map' for an AI Router. 
+        List every unique topic found. For each topic, provide a 1-sentence description.
+        Format:
+        - [Topic Name]: [What it covers]
+        
+        If the snippets cover multiple unrelated areas, list them all clearly.
+        """
+        summary = self.llm.invoke(prompt).content
+        
+        with open(self.manifest_path, "w") as f:
+            json.dump({"summary": summary, "updated": str(datetime.now())}, f)
 
     def index_documents(self):
         """Processes raw PDFs and builds the searchable Vector Database."""
@@ -120,18 +115,14 @@ class CompanyKnowledgeBase:
             return False
 
     def query(self, user_question, extra_context="", history=[]):
-        """
-        THE GATEKEEPER: Routes the query with history awareness and maintains memory.
-        """
-        # 1. Format Chat History for the LLM
-        # This transforms the list of messages into a readable transcript
+        """THE GATEKEEPER: Routes the query with history awareness and maintains memory."""
+        # 1. Format Chat History
         formatted_history = ""
         for msg in history:
             role = "User" if msg["role"] == "user" else "Assistant"
             formatted_history += f"{role}: {msg['content']}\n"
 
         # 2. History-Aware Routing Decision
-        # We include history here so the router knows what "it" or "that" refers to
         kb_map = self._get_kb_map()
         router_prompt = f"""
         KB Map: {kb_map}
@@ -147,34 +138,33 @@ class CompanyKnowledgeBase:
         decision_resp = self.llm.invoke(router_prompt).content.strip().upper()
 
         # 3. Retrieval Path
+        context = ""
+        docs = []
         if "YES" in decision_resp and self.db_path.exists():
             vectorstore = FAISS.load_local(
-        str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
-    )
-    
-    #  DYNAMIC RETRIEVAL:
-    #  we ask for k=5 but filter by 'relevance score'
-    # This ensures we only get paragraphs that actually match.
-    retriever = vectorstore.as_retriever(
-        search_type="similarity_score_threshold",
-        search_kwargs={
-            "k": 5, 
-            "score_threshold": 0.5  # Only takes paragraphs that are at least 50% relevant
-        }
-    )
-    
-    docs = retriever.invoke(user_question)
-    
-    # If the threshold was too strict and got 0 docs, fallback to a standard search
-    if not docs:
-        docs = vectorstore.similarity_search(user_question, k=2)
+                str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
+            )
+            
+            # DYNAMIC RETRIEVAL with score threshold
+            retriever = vectorstore.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={"k": 5, "score_threshold": 0.5}
+            )
+            
+            docs = retriever.invoke(user_question)
+            
+            # Fallback if threshold is too strict
+            if not docs:
+                docs = vectorstore.similarity_search(user_question, k=2)
 
-    context = "\n\n---\n\n".join([d.page_content for d in docs])
+            context = "\n\n---\n\n".join([d.page_content for d in docs])
+        else:
+            context = "Use general knowledge or the conversation history provided below."
 
         # 4. Tone & Personality Application
         personality = self._get_personality()
         
-        # 5. THE FINAL PROMPT (The "Brain" of the response)
+        # 5. THE FINAL PROMPT
         final_prompt = f"""
         Role: {personality}
         
@@ -191,8 +181,8 @@ class CompanyKnowledgeBase:
         {user_question}
         
         Instructions:
-        1. Check [CONVERSATION HISTORY] first. If the user already provided info (like their name or username), use it!
-        2. If the answer is in the [TEMPORARY UPLOADED FILE CONTEXT], prioritize that for specific document questions.
+        1. Check [CONVERSATION HISTORY] first. Use the user's name or shared info if available.
+        2. Prioritize [TEMPORARY UPLOADED FILE CONTEXT] for specific document queries.
         3. Use the [PERMANENT COMPANY CONTEXT] for general company rules.
         4. If you still don't know, honestly state you don't have that information.
         """
