@@ -148,7 +148,7 @@ class CompanyKnowledgeBase:
 
         # 3. Retrieval Path
         if "YES" in decision_resp and self.db_path.exists():
-    vectorstore = FAISS.load_local(
+            vectorstore = FAISS.load_local(
         str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
     )
     
