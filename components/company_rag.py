@@ -114,96 +114,75 @@ class CompanyKnowledgeBase:
             print(f"Indexing Error: {e}")
             return False
 
-    def query(self, user_question, extra_context="", history=[]):
-        """THE GATEKEEPER: Routes the query with history awareness and maintains memory."""
-        
-        # 1. Format Chat History (Maintain Memory)
-        formatted_history = ""
-        for msg in history:
-            role = "User" if msg["role"] == "user" else "Assistant"
-            formatted_history += f"{role}: {msg['content']}\n"
+
+def query(self, user_question, extra_context="", history=[]):
+    """
+    THE DATAQUARTZ BRAIN:
+    1. Loads persona from the prompt folder.
+    2. Routes queries based on KB relevance.
+    3. Injects data into a strict system prompt.
+    """
     
-        # 2. History-Aware Routing Decision
-        kb_map = self._get_kb_map()
-        router_prompt = f"""
-        You are the Traffic Controller for Dataquartz. 
-        KB Map (Topics we have documents for): {kb_map}
+    # --- STEP 1: IMPORT SYSTEM PERSONA ---
+    # Logic: Read the text file from your 'prompt' folder
+    try:
+        with open("prompts/persona.txt", "r") as f:
+            persona_template = f.read()
+    except FileNotFoundError:
+        # Fallback if the file is missing during deployment
+        persona_template = "You are the Dataquartz Assistant. Answer based on context: {context}\nQuestion: {user_question}"
+
+    # --- STEP 2: FORMAT CHAT HISTORY ---
+    formatted_history = ""
+    for msg in history:
+        role = "User" if msg["role"] == "user" else "Assistant"
+        formatted_history += f"{role}: {msg['content']}\n"
+
+    # --- STEP 3: IDENTITY-AWARE ROUTING ---
+    kb_map = self._get_kb_map()
+    router_prompt = f"""
+    KB Map: {kb_map}
+    User Question: {user_question}
+    Does this ask about Dataquartz or specific business data? (You/Your = Dataquartz).
+    Answer ONLY YES or NO.
+    """
+    decision_resp = self.llm.invoke(router_prompt).content.strip().upper()
+
+    # --- STEP 4: DYNAMIC RETRIEVAL ---
+    context = ""
+    docs = []
+    if "YES" in decision_resp and self.db_path.exists():
+        vectorstore = FAISS.load_local(
+            str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
+        )
+        # We use a 0.4 threshold as per your current settings
+        retriever = vectorstore.as_retriever(
+            search_type="similarity_score_threshold",
+            search_kwargs={"k": 4, "score_threshold": 0.4}
+        )
+        docs = retriever.invoke(user_question)
         
-        Recent Conversation:
-        {formatted_history[-1000:] if formatted_history else "No previous history."}
-        
-        Current Question: {user_question}
-        
-        TASK: Based on the KB Map, does this question require searching our company documents?
-        - Answer YES only if it relates to company data, rules, or the KB Map.
-        - Answer NO for greetings, general knowledge (weather, time), or irrelevant topics.
-        
-        Answer only YES or NO.
-        """
-        decision_resp = self.llm.invoke(router_prompt).content.strip().upper()
-    
-        # 3. Retrieval Path (Dynamic Search)
-        context = ""
-        docs = []
-        if "YES" in decision_resp and self.db_path.exists():
-            vectorstore = FAISS.load_local(
-                str(self.db_path), self.embeddings, allow_dangerous_deserialization=True
-            )
+        if not docs:
+            docs = vectorstore.similarity_search(user_question, k=2)
             
-            # Dynamic Retrieval with 50% relevance threshold
-            retriever = vectorstore.as_retriever(
-                search_type="similarity_score_threshold",
-                search_kwargs={"k": 4, "score_threshold": 0.4}
-            )
-            
-            docs = retriever.invoke(user_question)
-            
-            # Fallback to standard search if threshold is too strict
-            if not docs:
-                docs = vectorstore.similarity_search(user_question, k=2)
+        context = "\n\n---\n\n".join([d.page_content for d in docs])
+
+    # --- STEP 5: FILL THE PERSONA & GENERATE ---
+    # Logic: .format() fills the {placeholders} we put in persona.txt
+    personality_tone = self._get_personality()
     
-            context = "\n\n---\n\n".join([d.page_content for d in docs])
+    final_prompt = persona_template.format(
+        personality_tone=personality_tone,
+        formatted_history=formatted_history if formatted_history else "New chat started.",
+        context=context if context else "No company records found for this query.",
+        extra_context=extra_context if extra_context else "No new files uploaded.",
+        user_question=user_question
+    )
+
+    response = self.llm.invoke(final_prompt)
     
-        # 4. Fetch Custom Personality from DB
-        personality_tone = self._get_personality()
-    
-        # 5. THE FINAL CONSOLIDATED PROMPT (Persona + Logic + Data)
-        system_persona_prompt = f"""
-        ### ROLE
-        You are the "Dataquartz Intelligence Assistant." Your current tone is: {personality_tone}.
-        You are professional, accurate, and strictly bound by the provided data.
-    
-        ### TASKS & DUTIES
-        1. Provide answers based ONLY on the provided Context blocks below.
-        2. KB FIRST: Always prioritize the Knowledge Base. 
-        3. NO HALLUCINATION: If the information is not in the context, do not make it up.
-    
-        ### GUARDRAILS
-        - IRRELEVANCE POLICY: If asked about topics outside of business or company data (e.g., weather, recipes), state that you only assist with Dataquartz data.
-        - REDIRECTION: If the answer is missing, finish with: "For further assistance, please contact sales@dataquartz.com."
-    
-        ### EXECUTION STEPS
-        1. Check [CONVERSATION HISTORY] for user details (like names).
-        2. Check [TEMPORARY UPLOADED FILE CONTEXT] first—this is high priority for specific file questions.
-        3. Check [PERMANENT COMPANY CONTEXT] for general company rules.
-    
-        [CONVERSATION HISTORY]
-        {formatted_history if formatted_history else "No previous history."}
-    
-        [PERMANENT COMPANY CONTEXT]
-        {context if context else "No company documents retrieved for this query."}
-    
-        [TEMPORARY UPLOADED FILE CONTEXT]
-        {extra_context if extra_context else "No temporary files uploaded."}
-    
-        [USER QUESTION]
-        {user_question}
-        """
-    
-        response = self.llm.invoke(system_persona_prompt)
-    
-        return {
+    return {
         "answer": response.content,
-        "sources": [d.metadata.get('source', 'Unknown') for d in docs],
+        "sources": [d.metadata.get('source', 'Knowledge Base') for d in docs],
         "used_kb": "YES" in decision_resp or len(extra_context) > 0
-            }
+    }
