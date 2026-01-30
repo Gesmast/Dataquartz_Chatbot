@@ -153,7 +153,7 @@ class CompanyKnowledgeBase:
             # Dynamic Retrieval with 50% relevance threshold
             retriever = vectorstore.as_retriever(
                 search_type="similarity_score_threshold",
-                search_kwargs={"k": 5, "score_threshold": 0.5}
+                search_kwargs={"k": 4, "score_threshold": 0.4}
             )
             
             docs = retriever.invoke(user_question)
