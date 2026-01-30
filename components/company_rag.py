@@ -202,8 +202,8 @@ class CompanyKnowledgeBase:
     
         response = self.llm.invoke(system_persona_prompt)
     
-    return {
+        return {
         "answer": response.content,
         "sources": [d.metadata.get('source', 'Unknown') for d in docs],
         "used_kb": "YES" in decision_resp or len(extra_context) > 0
-    }
+            }
