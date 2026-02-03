@@ -1,10 +1,18 @@
-streamlit
-langchain
-langchain-openai
-langchain-community
-faiss-cpu
+# Core Web Framework
+streamlit>=1.53.0
+pillow
 python-dotenv
-PyPDF2
-reportlab
-pypdf
-pysqlite3-binary
+
+# LLM & Logic (Switching from OpenAI to Llama 3 via Groq)
+langchain
+langchain-groq
+langchain-community
+
+# Knowledge Base (The MCP Web Librarian)
+fastmcp
+beautifulsoup4
+requests
+
+# Cloud Database (Anonymous Session History)
+st-supabase-connection
+supabase
