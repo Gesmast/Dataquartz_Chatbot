@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_groq import ChatGroq
-from mcp_server import scrape_dataquartz  # Using the refined helper function
+from mcp_server import search_dataquartz  # Using the refined helper function
 from database import create_new_session, save_message, get_chat_history
 
 # --- 1. PAGE CONFIG ---
