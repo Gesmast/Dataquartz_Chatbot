@@ -1,29 +1,24 @@
 import streamlit as st
-import base64
-from io import BytesIO
-from PIL import Image
 
-# --- 1. CONFIG ---
-# Retaining your custom icon logic
-ICON_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAAAAABXZoBIAAAAtElEQVR4AcXLIQiDQBiG4bc3e2dxbWllxQ5Wo+3AYrt0IFy12m1XBPNh5xB7j9eD7QY7TsbAhYX5lP+Dl5+TFTnHdM2x9q9RTWY0qFfU1jbcBcnUABfXCXhscyMXr9fUpI53q8hCCSCDS3EmGgSTidPt0RLJGp8T5/r52Qn8LU6xx76M11c4HadZSNwVYBwFeQDgFhy70XS9zaUAFSSZDsPCm8clDee9zdqVY/pbVD/HQnGSJxdORxqCuJ3EAAAAAElFTkSuQmCC"
+# --- 1. ASSET LINKS (Direct from Supabase) ---
+PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
+DQ_LOGO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/dq_logo_transparent.png"
+BG_VIDEO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/quartz_background.mp4"
 
-def get_page_icon():
-    return Image.open(BytesIO(base64.b64decode(ICON_BASE64)))
-
+# --- 2. CONFIG (MUST BE FIRST) ---
 st.set_page_config(
     page_title="Dataquartz AI", 
-    page_icon=get_page_icon(), 
+    page_icon=PAGE_ICON, 
     layout="centered",
     initial_sidebar_state="collapsed" 
 )
 
-# --- 2. PERSISTENT VIDEO & MAROON THEME ---
-if "bg_video_url" not in st.session_state:
-    st.session_state.bg_video_url = "https://cdn.pixabay.com/video/2020/10/21/52991-472381398_large.mp4"
-
+# --- 3. UI STYLING (CSS) ---
 st.markdown(f"""
     <style>
-        /* 1. UI HIDING (Sidebar & Header) */
+        @import url('https://fonts.googleapis.com/css2?family=Electrolize&family=Inter:wght@400;700&display=swap');
+
+        /* Hide Streamlit elements */
         [data-testid="stSidebar"], [data-testid="stSidebarNav"], button[kind="header"] {{
             display: none !important;
         }}
@@ -31,97 +26,108 @@ st.markdown(f"""
         .stApp {{
             background: transparent !important;
         }}
-        
-        .main {{
-            background: linear-gradient(180deg, #000000 0%, #2D080A 100%) !important;
-        }}
 
-        /* 2. BACKGROUND VIDEO POSITIONING */
+        /* Background Video */
         #bgVideo {{
-            position: fixed; 
-            right: 0; 
-            bottom: 0;
-            min-width: 100%; 
-            min-height: 100%;
-            z-index: -1; 
-            object-fit: cover; 
-            filter: brightness(0.3) saturate(1.1) hue-rotate(140deg);
+            position: fixed; right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            z-index: -1; object-fit: cover; 
+            filter: brightness(0.25);
         }}
         
-        /* 3. CENTERED CONTENT BOX */
+        /* Glassmorphism Content Box */
         .content-box {{
-            background: rgba(0, 0, 0, 0.65);
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
             border-radius: 28px;
             padding: 40px;
-            border: 1px solid #5E0B10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            margin-top: 15vh;
+            margin-top: 10vh;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
         }}
 
-        /* 4. MAROON BUTTONS */
+        .electro-header {{
+            font-family: 'Electrolize', sans-serif;
+            font-size: 4rem;
+            background: linear-gradient(90deg, #00FFFF, #9D00FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            letter-spacing: 5px;
+            margin-bottom: 0;
+        }}
+
+        .sub-header {{
+            font-family: 'Electrolize', sans-serif;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }}
+
+        /* Cyan/Purple Electro Buttons */
         div.stButton > button {{
-            background-color: #4A0404 !important;
+            background: rgba(255, 255, 255, 0.05) !important;
             color: #F8F1F1 !important;
-            border: 1px solid #800000 !important;
+            border: 1px solid rgba(0, 255, 255, 0.3) !important;
             border-radius: 12px !important;
             padding: 15px 25px !important;
-            font-weight: 600 !important;
+            font-family: 'Electrolize', sans-serif !important;
             width: 100% !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.4s ease !important;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            font-size: 1rem;
         }}
 
         div.stButton > button:hover {{
-            background-color: #5E0B10 !important;
-            border-color: #A01A22 !important;
-            box-shadow: 0 0 20px rgba(128, 0, 0, 0.7);
-            transform: translateY(-2px);
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), rgba(157, 0, 255, 0.1)) !important;
+            border-color: #00FFFF !important;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+            transform: translateY(-3px);
         }}
 
         .website-link {{
-            color: #94a3b8;
+            color: #00FFFF;
             text-decoration: none;
-            font-weight: 400;
-            transition: color 0.3s;
+            font-family: 'Electrolize', sans-serif;
+            transition: 0.3s;
         }}
         
         .website-link:hover {{
-            color: #F8F1F1;
+            text-shadow: 0 0 10px #00FFFF;
         }}
     </style>
     
     <video autoplay muted loop playsinline id="bgVideo">
-        <source src="{st.session_state.bg_video_url}" type="video/mp4">
+        <source src="{BG_VIDEO}" type="video/mp4">
     </video>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# --- 3. MAIN UI CONTENT ---
+# --- 4. MAIN UI CONTENT ---
 with st.container():
-    # Content Box Wrapper (via Markdown)
-    st.markdown("""
+    # Centered Logo and Electro Header
+    st.markdown(f"""
         <div class="content-box">
-            <h1 style='color: white; font-size: 3.8rem; margin-bottom: 0; font-weight: 700;'>Dataquartz</h1>
-            <p style='color: #e2e8f0; font-size: 1.3rem; margin-top: 10px;'>Intelligent AI Ecosystems</p>
-            <hr style='border: 0; border-top: 1px solid #5E0B10; margin: 30px 0;'>
+            <img src="{DQ_LOGO}" width="150" style="margin-bottom: 20px;">
+            <div class="electro-header">DATAQUARTZ</div>
+            <div class="sub-header">Intelligent AI Ecosystems</div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
         </div>
     """, unsafe_allow_html=True)
 
-    # Columns for the two primary actions
+    # Action Grid
     col1, col2 = st.columns(2)
 
     with col1:
-        # Action 1: External Website
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Explore Solutions"):
             st.markdown('<meta http-equiv="refresh" content="0;URL=\'https://dataquartz.com\'" />', unsafe_allow_html=True)
         st.markdown("<p style='text-align: center;'><a href='https://dataquartz.com' class='website-link'>dataquartz.com</a></p>", unsafe_allow_html=True)
 
     with col2:
-        # Action 2: Chatbot Page
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Talk to AI Assistant"):
             st.switch_page("pages/1_💬_Chatbot.py")
-        st.markdown("<p style='text-align: center; color: #94a3b8;'>Instant Support</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: rgba(255,255,255,0.5); font-family: Electrolize;'>24/7 Intelligence</p>", unsafe_allow_html=True)
