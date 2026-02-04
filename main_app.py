@@ -123,5 +123,5 @@ with st.container():
         # Action 2: Chatbot Page
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Talk to AI Assistant"):
-            st.switch_page("pages/1_Chatbot.py")
+            st.switch_page("pages/1_💬_Chatbot.py")
         st.markdown("<p style='text-align: center; color: #94a3b8;'>Instant Support</p>", unsafe_allow_html=True)
