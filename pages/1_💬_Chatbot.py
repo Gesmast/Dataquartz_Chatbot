@@ -106,7 +106,7 @@ if prompt := st.chat_input("Ask about Dataquartz products..."):
             context = scrape_dataquartz(prompt)
             
             # 2. LLM Call via Groq
-            llm = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=st.secrets["GROQ_API_KEY"])
+            llm = ChatGroq(model="llama-3.1-8b-instant", groq_api_key=st.secrets["GROQ_API_KEY"])
             
             # 3. Incorporating System Prompt
             try:
