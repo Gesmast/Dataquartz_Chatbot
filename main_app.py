@@ -67,11 +67,12 @@ st.markdown(f"""
             margin-top: 10px;
         }}
 
-        /* Cyan/Purple Electro Buttons */
+        /* Cyan/Purple Electro Buttons with Shine/Glow */
         div.stButton > button {{
             background: rgba(255, 255, 255, 0.05) !important;
             color: #F8F1F1 !important;
-            border: 1px solid rgba(0, 255, 255, 0.3) !important;
+            /* The base outline */
+            border: 1px solid rgba(0, 255, 255, 0.4) !important;
             border-radius: 12px !important;
             padding: 15px 25px !important;
             font-family: 'Electrolize', sans-serif !important;
@@ -79,13 +80,17 @@ st.markdown(f"""
             transition: all 0.4s ease !important;
             text-transform: uppercase;
             letter-spacing: 1.5px;
+            /* The 'Shine' effect */
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1), inset 0 0 5px rgba(0, 255, 255, 0.1);
         }}
 
         div.stButton > button:hover {{
             background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), rgba(157, 0, 255, 0.1)) !important;
             border-color: #00FFFF !important;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+            /* Intense Glow on Hover */
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), inset 0 0 10px rgba(0, 255, 255, 0.2) !important;
             transform: translateY(-3px);
+            color: #ffffff !important;
         }}
 
         .website-link {{
@@ -122,14 +127,14 @@ with st.container():
 
     with col1:
         st.markdown("<br>", unsafe_allow_html=True)
-        # Main Action Button
+        # Main Action Button (The only link)
         if st.button("Explore Solutions"):
             st.markdown('<meta http-equiv="refresh" content="0;URL=\'https://dataquartz.com\'" />', unsafe_allow_html=True)
         
-        # Sub-text Link
+        # Static Text Label (No link)
         st.markdown(
-            "<p style='text-align: center;'>"
-            "<a href='https://dataquartz.com' class='website-link'>Visit the dataquartz website!</a>"
+            "<p style='text-align: center; color: rgba(255,255,255,0.5); font-family: Electrolize;'>"
+            "Visit the dataquartz website"
             "</p>", 
             unsafe_allow_html=True
         )
