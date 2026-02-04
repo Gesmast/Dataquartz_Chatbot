@@ -1,7 +1,7 @@
-import os
 import streamlit as st
 from langchain_groq import ChatGroq
-from mcp_server import search_dataquartz
+from mcp_server import scrape_dataquartz  # Using the refined helper function
+from database import create_new_session, save_message, get_chat_history
 
 # --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="Dataquartz AI", layout="centered")
@@ -44,7 +44,7 @@ st.markdown("""
             font-weight: 700 !important;
         }
 
-        /* Hide Sidebar Elements */
+        /* Hide Sidebar Elements for Clean Look */
         [data-testid="stSidebar"], [data-testid="stSidebarNav"] { display: none !important; }
 
         #bgVideo {
@@ -73,34 +73,54 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 4. CHAT LOGIC ---
-if "messages" not in st.session_state:
+# --- 4. DATABASE & SESSION INITIALIZATION ---
+
+# Check if session exists, if not, create one in Supabase
+if "session_id" not in st.session_state:
+    st.session_state.session_id = create_new_session("Web Discussion")
     st.session_state.messages = []
+
+# Load chat history from Supabase if the local state is empty
+if not st.session_state.messages:
+    db_history = get_chat_history(st.session_state.session_id)
+    st.session_state.messages = [
+        {"role": m['role'], "content": m['content']} for m in db_history
+    ]
 
 # Display history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# User Input
-if prompt := st.chat_input("Ask about Dataquartz..."):
+# --- 5. CHAT LOGIC ---
+
+if prompt := st.chat_input("Ask about Dataquartz products..."):
+    # A. Save and Display User Message
     st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
+    save_message(st.session_state.session_id, "user", prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner(" "): # Cleaner minimalist spinner
-            # 1. Scraping Tool
-            context = search_dataquartz(prompt)
+        with st.spinner(" "): 
+            # 1. Scraping Tool (Clean helper call)
+            context = scrape_dataquartz(prompt)
             
-            # 2. LLM Call
+            # 2. LLM Call via Groq
             llm = ChatGroq(model="llama3-70b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
             
-            # 3. Reading System Prompt from GitHub-mirrored folder
-            with open("prompts/SystemPrompt.txt", "r") as f:
-                sys_p = f.read()
+            # 3. Incorporating System Prompt
+            try:
+                with open("prompts/SystemPrompt.txt", "r") as f:
+                    sys_p = f.read()
+            except FileNotFoundError:
+                sys_p = "You are a helpful assistant for Dataquartz."
 
+            # Final Prompt Construction
             full_p = f"{sys_p}\n\nSITE CONTEXT:\n{context}\n\nQUESTION: {prompt}"
             response = llm.invoke(full_p)
+            answer = response.content
             
-            st.markdown(response.content)
-            st.session_state.messages.append({"role": "assistant", "content": response.content})
+            # B. Display and Save Assistant Message
+            st.markdown(answer)
+            st.session_state.messages.append({"role": "assistant", "content": answer})
+            save_message(st.session_state.session_id, "assistant", answer)
