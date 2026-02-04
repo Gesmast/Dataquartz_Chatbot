@@ -132,6 +132,3 @@ if prompt := st.chat_input("Message Dataquartz AI..."):
             st.session_state.messages.append({"role": "assistant", "content": answer})
             save_message(st.session_state.session_id, "assistant", answer)
             
-            st.markdown(answer)
-            st.session_state.messages.append({"role": "assistant", "content": answer})
-            save_message(st.session_state.session_id, "assistant", answer)
