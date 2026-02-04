@@ -29,8 +29,8 @@ def scrape_dataquartz(query: str) -> str:
     except Exception as e:
         return f"Scraper error: {str(e)}"
 
-# --- 2. THE CLASS / TOOL REGISTRATION ---
-class DataquartzTools:
+# --- 2.TOOL REGISTRATION ---
+
     @mcp.tool()
     def search_dataquartz(query: str) -> str:
         # We call the external logic function here
