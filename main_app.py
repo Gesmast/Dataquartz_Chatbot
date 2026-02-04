@@ -122,9 +122,17 @@ with st.container():
 
     with col1:
         st.markdown("<br>", unsafe_allow_html=True)
+        # Main Action Button
         if st.button("Explore Solutions"):
             st.markdown('<meta http-equiv="refresh" content="0;URL=\'https://dataquartz.com\'" />', unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'><a href='https://dataquartz.com' class='website-link'>dataquartz.com</a></p>", unsafe_allow_html=True)
+        
+        # Sub-text Link
+        st.markdown(
+            "<p style='text-align: center;'>"
+            "<a href='https://dataquartz.com' class='website-link'>Visit the dataquartz website!</a>"
+            "</p>", 
+            unsafe_allow_html=True
+        )
 
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
