@@ -1,18 +1,16 @@
-# Core Web Framework
-streamlit>=1.53.0
-pillow
-python-dotenv
+# # UI and Web Framework
+streamlit
 
-# LLM & Logic (Switching from OpenAI to Llama 3 via Groq)
-langchain
+# Database
+supabase
+
+# AI and LLM
 langchain-groq
-langchain-community
 
-# Knowledge Base (The MCP Web Librarian)
-fastmcp
+# Web Scraping and MCP
 beautifulsoup4
 requests
+fastmcp<3
 
-# Cloud Database (Anonymous Session History)
-st-supabase-connection
-supabase
+# Utilities
+python-dotenv
