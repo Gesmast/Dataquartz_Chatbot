@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_groq import ChatGroq
-from mcp_server import search_dataquartz  # Using the refined helper function
+from mcp_server import scrape_dataquartz # Using the refined helper function
 from database import create_new_session, save_message, get_chat_history
 
 # --- 1. PAGE CONFIG ---
@@ -103,7 +103,7 @@ if prompt := st.chat_input("Ask about Dataquartz products..."):
     with st.chat_message("assistant"):
         with st.spinner(" "): 
             # 1. Scraping Tool (Clean helper call)
-            context = search_dataquartz(prompt)
+            context = scrape_dataquartz(prompt)
             
             # 2. LLM Call via Groq
             llm = ChatGroq(model="llama3-70b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
