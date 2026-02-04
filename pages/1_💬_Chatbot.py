@@ -1,126 +1,122 @@
 import streamlit as st
 from langchain_groq import ChatGroq
-from mcp_server import scrape_dataquartz # Using the refined helper function
+from mcp_server import scrape_dataquartz
 from database import create_new_session, save_message, get_chat_history
 
-# --- 1. PAGE CONFIG ---
-st.set_page_config(page_title="Dataquartz AI", layout="centered")
+# --- 1. PAGE CONFIG (MUST BE FIRST) ---
+PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
+st.set_page_config(
+    page_title="Dataquartz AI", 
+    page_icon=PAGE_ICON,
+    layout="centered"
+)
 
-# --- 2. THE FOUR PILLARS UI (CSS) ---
-st.markdown("""
+# --- 2. ASSET CONSTANTS ---
+DQ_LOGO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/dq_logo_transparent.png"
+AI_AVATAR = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/Gemini_Generated_Image_sinrf3sinrf3sinr.png"
+USER_AVATAR = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/Untitled%20design%20(1).png"
+BG_VIDEO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/quartz_background.mp4"
+
+# --- 3. UI STYLING (CSS) ---
+st.markdown(f"""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Electrolize&display=swap');
 
-        /* Pillar 4: Geometry & Typography */
-        html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
-            letter-spacing: 0.02em;
-        }
+        .stApp, .stAppViewContainer, .stMain, [data-testid="stHeader"] {{
+            background: transparent !important;
+        }}
 
-        /* Pillar 2 & 3: Palette & Luminescent Accents (Orbital Glows) */
-        .stApp {
-            background-color: #0B0B0B !important;
-            background-image: 
-                radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(157, 0, 255, 0.07) 0%, transparent 40%) !important;
-            color: #F8F1F1;
-        }
+        #bgVideo {{
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -1; object-fit: cover;
+            filter: brightness(0.25);
+            pointer-events: none;
+        }}
 
-        /* Pillar 1: Glassmorphism & Light-Leak Borders */
-        .stChatMessage { 
-            background: rgba(255, 255, 255, 0.03) !important; 
-            backdrop-filter: blur(15px) !important;
-            border-radius: 16px !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
-            margin-bottom: 20px;
-        }
-
-        /* Gradient Text for Headers */
-        h1, h2, h3 {
+        .electro-header {{
+            font-family: 'Electrolize', sans-serif;
+            font-size: 5rem;
             background: linear-gradient(90deg, #00FFFF, #9D00FF);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-weight: 700 !important;
-        }
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 5px;
+            margin-top: -10px;
+        }}
 
-        /* Hide Sidebar Elements for Clean Look */
-        [data-testid="stSidebar"], [data-testid="stSidebarNav"] { display: none !important; }
+        .sub-header {{
+            font-family: 'Electrolize', sans-serif;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }}
 
-        #bgVideo {
-            position: fixed; right: 0; bottom: 0;
-            min-width: 100%; min-height: 100%;
-            z-index: -2; object-fit: cover; 
-            filter: brightness(0.2);
-        }
+        .stChatMessage {{ 
+            background: rgba(255, 255, 255, 0.05) !important; 
+            backdrop-filter: blur(12px) !important;
+            border-radius: 20px !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            margin-bottom: 1rem;
+        }}
 
-        .logo-container { text-align: center; padding: 2rem 0; }
-        .logo-container img { width: 180px; transition: 0.4s; }
-        .logo-container img:hover { filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.5)); transform: scale(1.02); }
+        [data-testid="stSidebar"] {{ display: none !important; }}
     </style>
-    
+
     <video autoplay muted loop playsinline id="bgVideo">
-        <source src="https://cdn.pixabay.com/video/2020/10/21/52991-472381398_large.mp4" type="video/mp4">
+        <source src="{BG_VIDEO}" type="video/mp4">
     </video>
 """, unsafe_allow_html=True)
 
-# --- 3. THE BRAND LINK ---
-st.markdown("""
-    <div class="logo-container">
-        <a href="https://dataquartz.com" target="_blank">
-            <img src="https://dataquartz.com/wp-content/uploads/2024/02/dq_logo_transparent.png">
-        </a>
+# --- 4. CENTERED BRANDING ---
+st.markdown(f"""
+    <div style="text-align: center; padding-top: 2rem;">
+        <img src="{DQ_LOGO}" width="140">
+        <div class="electro-header">CHAT</div>
+        <div class="sub-header">Ask about Dataquartz</div>
     </div>
 """, unsafe_allow_html=True)
 
-# --- 4. DATABASE & SESSION INITIALIZATION ---
-
-# Check if session exists, if not, create one in Supabase
+# --- 5. SESSION & HISTORY ---
 if "session_id" not in st.session_state:
     st.session_state.session_id = create_new_session("Web Discussion")
     st.session_state.messages = []
 
-# Load chat history from Supabase if the local state is empty
 if not st.session_state.messages:
     db_history = get_chat_history(st.session_state.session_id)
-    st.session_state.messages = [
-        {"role": m['role'], "content": m['content']} for m in db_history
-    ]
+    st.session_state.messages = [{"role": m['role'], "content": m['content']} for m in db_history]
 
-# Display history
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    current_avatar = USER_AVATAR if msg["role"] == "user" else AI_AVATAR
+    with st.chat_message(msg["role"], avatar=current_avatar):
         st.markdown(msg["content"])
 
-# --- 5. CHAT LOGIC ---
-
-if prompt := st.chat_input("Ask about Dataquartz products..."):
-    # A. Save and Display User Message
-    st.chat_message("user").markdown(prompt)
+# --- 6. CHAT LOGIC ---
+if prompt := st.chat_input("Message Dataquartz AI..."):
+    with st.chat_message("user", avatar=USER_AVATAR):
+        st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
     save_message(st.session_state.session_id, "user", prompt)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=AI_AVATAR):
         with st.spinner(" "): 
-            # 1. Scraping Tool (Clean helper call)
             context = scrape_dataquartz(prompt)
+            llm = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=st.secrets["GROQ_API_KEY"])
             
-            # 2. LLM Call via Groq
-            llm = ChatGroq(model="llama-3.1-8b-instant", groq_api_key=st.secrets["GROQ_API_KEY"])
-            
-            # 3. Incorporating System Prompt
             try:
                 with open("prompts/SystemPrompt.txt", "r") as f:
                     sys_p = f.read()
             except FileNotFoundError:
-                sys_p = "You are a helpful assistant for Dataquartz."
+                sys_p = "Professional Dataquartz assistant."
 
-            # Final Prompt Construction
-            full_p = f"{sys_p}\n\nSITE CONTEXT:\n{context}\n\nQUESTION: {prompt}"
-            response = llm.invoke(full_p)
+            # Use double backslashes for text-based newlines in the prompt string
+            full_prompt = f"{sys_p}\\n\\nSITE CONTEXT:\\n{context}\\n\\nQUESTION: {prompt}"
+            response = llm.invoke(full_prompt)
             answer = response.content
             
-            # B. Display and Save Assistant Message
             st.markdown(answer)
             st.session_state.messages.append({"role": "assistant", "content": answer})
             save_message(st.session_state.session_id, "assistant", answer)
