@@ -103,7 +103,7 @@ if prompt := st.chat_input("Ask about Dataquartz products..."):
     with st.chat_message("assistant"):
         with st.spinner(" "): 
             # 1. Scraping Tool (Clean helper call)
-            context = scrape_dataquartz(prompt)
+            context = search_dataquartz(prompt)
             
             # 2. LLM Call via Groq
             llm = ChatGroq(model="llama3-70b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
