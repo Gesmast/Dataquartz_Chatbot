@@ -3,7 +3,7 @@ from langchain_groq import ChatGroq
 from mcp_server import scrape_dataquartz
 from database import create_new_session, save_message, get_chat_history
 
-# --- 1. PAGE CONFIG (MUST BE FIRST) ---
+# --- 1. PAGE CONFIG ---
 PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
 st.set_page_config(
     page_title="Dataquartz AI", 
@@ -30,7 +30,7 @@ st.markdown(f"""
             position: fixed; top: 0; left: 0;
             width: 100vw; height: 100vh;
             z-index: -1; object-fit: cover;
-            filter: brightness(0.25);
+            filter: brightness(0.40); /* Increased from 0.25 to 0.40 for better visibility */
             pointer-events: none;
         }}
 
@@ -48,7 +48,7 @@ st.markdown(f"""
 
         .sub-header {{
             font-family: 'Electrolize', sans-serif;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.7);
             text-align: center;
             font-size: 1rem;
             text-transform: uppercase;
@@ -56,11 +56,20 @@ st.markdown(f"""
         }}
 
         .stChatMessage {{ 
-            background: rgba(255, 255, 255, 0.05) !important; 
-            backdrop-filter: blur(12px) !important;
+            background: rgba(255, 255, 255, 0.07) !important; /* Slightly more opaque to contrast with brighter video */
+            backdrop-filter: blur(15px) !important;
             border-radius: 20px !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             margin-bottom: 1rem;
+        }}
+
+        /* Logo Hover Effect */
+        .logo-link img {{
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }}
+        .logo-link img:hover {{
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
         }}
 
         [data-testid="stSidebar"] {{ display: none !important; }}
@@ -72,9 +81,12 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 4. CENTERED BRANDING ---
+# Logo now clicks through to the main app (home)
 st.markdown(f"""
     <div style="text-align: center; padding-top: 2rem;">
-        <img src="{DQ_LOGO}" width="140">
+        <a href="/" target="_self" class="logo-link">
+            <img src="{DQ_LOGO}" width="140">
+        </a>
         <div class="electro-header">CHAT</div>
         <div class="sub-header">Ask about Dataquartz</div>
     </div>
@@ -112,10 +124,13 @@ if prompt := st.chat_input("Message Dataquartz AI..."):
             except FileNotFoundError:
                 sys_p = "Professional Dataquartz assistant."
 
-            # Use double backslashes for text-based newlines in the prompt string
             full_prompt = f"{sys_p}\\n\\nSITE CONTEXT:\\n{context}\\n\\nQUESTION: {prompt}"
             response = llm.invoke(full_prompt)
             answer = response.content
+            
+            st.markdown(answer)
+            st.session_state.messages.append({"role": "assistant", "content": answer})
+            save_message(st.session_state.session_id, "assistant", answer)
             
             st.markdown(answer)
             st.session_state.messages.append({"role": "assistant", "content": answer})
