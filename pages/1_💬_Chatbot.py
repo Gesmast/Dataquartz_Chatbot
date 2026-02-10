@@ -2,6 +2,9 @@ import streamlit as st
 from langchain_groq import ChatGroq
 from mcp_server import scrape_dataquartz
 from database import create_new_session, save_message, get_chat_history
+import asyncio
+from Calmcp import mcp as cal_mcp
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 # --- 1. PAGE CONFIG ---
 PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
@@ -106,8 +109,18 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar=current_avatar):
         st.markdown(msg["content"])
 
+dataquartz_scraper_tool = Tool(
+    name="scrape_dataquartz",
+    func=scrape_dataquartz,
+    description="Useful for searching the Dataquartz website for company information, services, and locations."
+)
+
+# 2. Combine the manual scraper tool with the automated MCP calendar tools
+tools = [dataquartz_scraper_tool] + cal_mcp.tools
+
 # --- 6. CHAT LOGIC ---
 if prompt := st.chat_input("Message Dataquartz AI..."):
+    # UI: Display user message
     with st.chat_message("user", avatar=USER_AVATAR):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -115,20 +128,45 @@ if prompt := st.chat_input("Message Dataquartz AI..."):
 
     with st.chat_message("assistant", avatar=AI_AVATAR):
         with st.spinner(" "): 
-            context = scrape_dataquartz(prompt)
             llm = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=st.secrets["GROQ_API_KEY"])
             
-            try:
-                with open("prompts/SystemPrompt.txt", "r") as f:
-                    sys_p = f.read()
-            except FileNotFoundError:
-                sys_p = "Professional Dataquartz assistant."
+            # Bind all tools to the LLM
+            llm_with_tools = llm.bind_tools(tools)
 
-            full_prompt = f"{sys_p}\\n\\nSITE CONTEXT:\\n{context}\\n\\nQUESTION: {prompt}"
-            response = llm.invoke(full_prompt)
-            answer = response.content
+            # Build message history
+            messages = [SystemMessage(content=sys_p)]
+            for m in st.session_state.messages:
+                role_class = HumanMessage if m["role"] == "user" else AIMessage
+                messages.append(role_class(content=m["content"]))
+
+            # THE AI THOUGHT PROCESS
+            ai_msg = llm_with_tools.invoke(messages)
             
+            if ai_msg.tool_calls:
+                for tool_call in ai_msg.tool_calls:
+                    # ROUTER: Decide which function to run
+                    if tool_call["name"] == "scrape_dataquartz":
+                        # Run your imported scraper function
+                        observation = scrape_dataquartz(tool_call["args"]["query"])
+                    else:
+                        # Run the Cal.com MCP tools (which are async)
+                        selected_tool = next(t for t in cal_mcp.tools if t.name == tool_call["name"])
+                        
+                        # Injected context for guest ledger
+                        if "session_id" in tool_call["args"]:
+                            tool_call["args"]["session_id"] = st.session_state.session_id
+                            
+                        observation = asyncio.run(selected_tool.run(tool_call["args"]))
+                    
+                    # Final synthesis: Give the tool result back to the LLM
+                    messages.append(ai_msg)
+                    messages.append(ToolMessage(content=str(observation), tool_call_id=tool_call["id"]))
+                    final_response = llm.invoke(messages)
+                    answer = final_response.content
+            else:
+                answer = ai_msg.content
+
+            # UI: Display and save assistant response
             st.markdown(answer)
             st.session_state.messages.append({"role": "assistant", "content": answer})
             save_message(st.session_state.session_id, "assistant", answer)
-            
