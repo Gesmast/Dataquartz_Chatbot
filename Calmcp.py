@@ -11,17 +11,22 @@ mcp = FastMCP("Dataquartz Scheduler")
 # --- 1. THE TOOLS ---
 
 @mcp.tool()
-async def get_available_slots(date: str) -> str:
+async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour: str = "23:59:59") -> str:
     """
-    Fetches available booking slots for a specific date (YYYY-MM-DD).
-    Example: '2026-02-15'
+    Fetches available booking slots for a specific date and time range.
+    date: 'YYYY-MM-DD'
+    start_hour: 'HH:MM:SS' (Optional, defaults to start of day)
+    end_hour: 'HH:MM:SS' (Optional, defaults to end of day)
     """
     url = f"{CAL_API_BASE}/slots"
+    
+    # We combine the date and the specific hours requested
+    # Note: Cal.com API expects UTC or ISO format; we specify the window here.
     params = {
         "apiKey": CAL_API_KEY,
         "eventTypeId": EVENT_TYPE_ID,
-        "startTime": f"{date}T00:00:00Z",
-        "endTime": f"{date}T23:59:59Z",
+        "startTime": f"{date}T{start_hour}Z",
+        "endTime": f"{date}T{end_hour}Z",
     }
     
     async with httpx.AsyncClient() as client:
@@ -32,11 +37,11 @@ async def get_available_slots(date: str) -> str:
         day_slots = slots.get(date, [])
         
         if not day_slots:
-            return f"No available slots found for {date}."
+            return f"I couldn't find any open slots between {start_hour} and {end_hour} on {date}."
         
-        # Format slots for the AI to read easily
+        # Format slots for the AI (e.g., 14:30)
         times = [s['time'].split('T')[1][:5] for s in day_slots]
-        return f"Available slots for {date}: " + ", ".join(times)
+        return f"Available slots for {date} from {start_hour[:5]} to {end_hour[:5]}: " + ", ".join(times)
 
 
 
@@ -156,4 +161,5 @@ async def get_booking_by_email(email: str) -> str:
         return "I found the following bookings for you:\n" + "\n".join(booking_list)
     
     except Exception as e:
+
         return f"Database error: {str(e)}"
