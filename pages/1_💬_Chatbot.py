@@ -6,6 +6,7 @@ import asyncio
 from Calmcp import mcp as cal_mcp
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import Tool
+from langchain_mcp_adapters.tools import load_mcp_tools
 
 # --- 1. PAGE CONFIG ---
 PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
@@ -96,6 +97,11 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+async def get_all_tools():
+    # This converts the MCP internal tools into LangChain-compatible objects
+    mcp_tools = await load_mcp_tools(cal_mcp) 
+    return [dataquartz_scraper_tool] + mcp_tools
+
 # --- 5. SESSION & HISTORY ---
 if "session_id" not in st.session_state:
     st.session_state.session_id = create_new_session("Web Discussion")
@@ -116,9 +122,9 @@ dataquartz_scraper_tool = Tool(
     description="Useful for searching the Dataquartz website for company information, services, and locations."
 )
 
-# 2. Combine the manual scraper tool with the automated MCP calendar tools
-cal_tools = asyncio.run(cal_mcp.list_tools())
-tools = [dataquartz_scraper_tool] + cal_tools
+
+
+tools = asyncio.run(get_all_tools())
 
 # --- 6. CHAT LOGIC ---
 if prompt := st.chat_input("Message Dataquartz AI..."):
