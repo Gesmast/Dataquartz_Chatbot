@@ -1,4 +1,4 @@
-# # UI and Web Framework
+# UI and Web Framework
 streamlit
 
 # Database
@@ -6,11 +6,13 @@ supabase
 
 # AI and LLM
 langchain-groq
+langchain-core
 
 # Web Scraping and MCP
 beautifulsoup4
 requests
-fastmcp<3
+httpx
+fastmcp>=3.0.0b2
 
 # Utilities
 python-dotenv
