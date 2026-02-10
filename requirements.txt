@@ -8,11 +8,13 @@ supabase
 langchain-groq
 langchain-core
 
+
 # Web Scraping and MCP
 beautifulsoup4
 requests
 httpx
 fastmcp>=3.0.0b2
+langchain-mcp-adapters
 
 # Utilities
 python-dotenv
