@@ -117,7 +117,8 @@ dataquartz_scraper_tool = Tool(
 )
 
 # 2. Combine the manual scraper tool with the automated MCP calendar tools
-tools = [dataquartz_scraper_tool] + cal_mcp.tools
+cal_tools = cal_mcp.list_tools()
+tools = [dataquartz_scraper_tool] + cal_tools
 
 # --- 6. CHAT LOGIC ---
 if prompt := st.chat_input("Message Dataquartz AI..."):
