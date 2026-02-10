@@ -5,6 +5,7 @@ from database import create_new_session, save_message, get_chat_history
 import asyncio
 from Calmcp import mcp as cal_mcp
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.tools import Tool
 
 # --- 1. PAGE CONFIG ---
 PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
