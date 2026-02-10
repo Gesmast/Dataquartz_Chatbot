@@ -1,21 +1,11 @@
-# UI and Web Framework
 streamlit
-
-# Database
 supabase
-
-# AI and LLM Orchestration
-langchain-groq>=1.1.2
-langchain-core>=1.0.0
-langgraph>=1.0.8            # Required for create_react_agent
-langchain-mcp-adapters      # Bridge for FastMCP tools
-
-# Web Scraping and MCP
+langchain-groq
+langchain-core
+langgraph
+langchain-mcp-adapters
 beautifulsoup4
 requests
 httpx
-fastmcp>=3.0.0              # Stable version for 2026
-mcp                         # Official MCP SDK
-
-# Utilities
+fastmcp
 python-dotenv
