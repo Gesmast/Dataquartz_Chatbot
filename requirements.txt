@@ -7,5 +7,6 @@ langchain-mcp-adapters
 beautifulsoup4
 requests
 httpx
-fastmcp
+# Pinning to a known stable version that supports list_tools
+fastmcp==0.4.1
 python-dotenv
