@@ -6,7 +6,7 @@ from supabase import create_client
 import streamlit as st
 
 # Initialize the MCP Server
-mcp = FastMCP("Cal")
+mcp = FastMCP("Dataquartz Calendar")
 
 # --- 1. THE TOOLS ---
 
@@ -163,4 +163,5 @@ async def get_booking_by_email(email: str) -> str:
     except Exception as e:
 
         return f"Database error: {str(e)}"
+
 
