@@ -9,26 +9,45 @@ mcp = FastMCP("Dataquartz Librarian")
 # --- 1. THE CALLABLE LOGIC ---
 # Keep this outside or as a static method so Streamlit can call it easily.
 def scrape_dataquartz(query: str) -> str:
+    """
+    Agent Tool: Searches the Dataquartz website and extracts chunks relevant to the query.
+    """
     url = "https://dataquartz.com" 
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {"User-Agent": "DataquartzBot/1.0"}
+    
     try:
         response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Clean up noise
-        for element in soup(["script", "style", "nav", "footer"]):
+        # 1. Aggressive Noise Reduction
+        for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
             element.extract()
-        text = soup.get_text(separator=' ')
+
+        # 2. Extract meaningful text blocks (not just one long string)
+        # We look for paragraphs and list items where the real info lives
+        text_blocks = [tag.get_text(separator=' ', strip=True) 
+                       for tag in soup.find_all(['p', 'li', 'h1', 'h2', 'h3'])]
         
-        # Simple keyword matching
-        keywords = query.lower().split()
-        sentences = re.split(r'(?<=[.!?]) +', text)
-        relevant = [s.strip() for s in sentences if any(k in s.lower() for k in keywords)]
+        # 3. Smart Relevance Filtering
+        keywords = [k.lower() for k in query.split() if len(k) > 3] # Filter out 'the', 'is', etc.
+        if not keywords: keywords = [query.lower()]
+            
+        relevant_chunks = []
+        for block in text_blocks:
+            if any(k in block.lower() for k in keywords):
+                relevant_chunks.append(block)
+
+        # 4. Result Logic
+        if relevant_chunks:
+            # Return top 4 most relevant chunks to stay within context limits
+            return "\n\n---\n\n".join(relevant_chunks[:4])
         
-        return "\n".join(relevant[:5]) if relevant else "No live matches found."
+        # Fallback: If no keywords match, return the first few paragraphs so the AI has context
+        return "No direct keyword match. General site context: " + " ".join(text_blocks[:3])
+
     except Exception as e:
         return f"Scraper error: {str(e)}"
-
 # --- 2.TOOL REGISTRATION ---
 
     @mcp.tool()
