@@ -4,6 +4,7 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
+from langchain_core.tools import StructuredTool
 
 # Project Imports
 from mcp_server import scrape_dataquartz
@@ -21,21 +22,31 @@ dataquartz_scraper_tool = Tool(
     description="Search the Dataquartz website for company information and services."
 )
 
-async def get_agent():
-    """Initializes the agent with all tools combined."""
-    # The Adapter handles the conversion so LangGraph can 'read' FastMCP tools
-    mcp_tools = await load_mcp_tools(cal_mcp)
-    all_tools = [dataquartz_scraper_tool] + mcp_tools
-    
-    llm = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=st.secrets["GROQ_API_KEY"])
-    
-    # create_react_agent handles the tool-calling loop for you!
-    return create_react_agent(llm, tools=all_tools, state_modifier=sys_p)
+def get_cal_tools():
+    """Manually wraps FastMCP functions into LangChain tools."""
+    # We create a LangChain tool for each function in your Calmcp.py
+    # Replace 'get_available_slots' with your actual function names
+    from Calmcp import get_available_slots, create_cal_booking 
+
+    cal_slots_tool = StructuredTool.from_function(
+        coroutine=get_available_slots,
+        name="get_available_slots",
+        description="Finds open booking times for a specific date (YYYY-MM-DD)."
+    )
+
+    cal_booking_tool = StructuredTool.from_function(
+        coroutine=create_cal_booking,
+        name="create_cal_booking",
+        description="Books a meeting. Requires email, name, and start_time."
+    )
+
+    return [cal_slots_tool, cal_booking_tool]
 
 # Initialize Agent in Session State
-if "agent" not in st.session_state:
-    st.session_state.agent = asyncio.run(get_agent())
-
+if "tools" not in st.session_state:
+    manual_cal_tools = get_cal_tools()
+    st.session_state.tools = [dataquartz_scraper_tool] + manual_cal_tools
+    
 # --- 2. CHAT HISTORY & UI ---
 if "session_id" not in st.session_state:
     st.session_state.session_id = create_new_session("Web Discussion")
