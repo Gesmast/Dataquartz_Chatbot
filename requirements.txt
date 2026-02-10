@@ -3,7 +3,7 @@ supabase
 langchain-groq
 langchain-core
 langgraph
-langchain-mcp-adapters
+
 beautifulsoup4
 requests
 httpx
