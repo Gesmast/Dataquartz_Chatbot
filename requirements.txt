@@ -16,6 +16,7 @@ mcp
 fastmcp==0.4.1
 
 # Scraping & Networking
+
 beautifulsoup4
 requests
 httpx
