@@ -98,4 +98,4 @@ if prompt := st.chat_input("How can I help you today?"):
             
             # 3. Save History
             st.session_state.messages.append({"role": "assistant", "content": answer})
-            save_message(st.session_state.session_id, "assistant", answer)st.session_state.session_id, "assistant", answer)
+            save_message(st.session_state.session_id, "assistant", answer)
