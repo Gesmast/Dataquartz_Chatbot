@@ -15,11 +15,10 @@ langchain-mcp-adapters
 mcp
 fastmcp==0.4.1
 
-# Scaping & Networking
+# Scraping & Networking
 beautifulsoup4
 requests
 httpx
 
 # Utilities
 python-dotenv
-nest-asyncio
