@@ -1,12 +1,25 @@
+# Web Framework & UI
 streamlit
+
+# Database & Persistence
 supabase
+
+# AI Orchestration (LangChain Ecosystem)
 langchain-groq
 langchain-core
+langchain-community
 langgraph
+langchain-mcp-adapters
 
+# MCP Core (For Client/Server Communication)
+mcp
+fastmcp==0.4.1
+
+# Scaping & Networking
 beautifulsoup4
 requests
 httpx
-# Pinning to a known stable version that supports list_tools
-fastmcp==0.4.1
+
+# Utilities
 python-dotenv
+nest-asyncio
