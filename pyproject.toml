@@ -1,3 +1,4 @@
+[project]
 name = "dataquartz-chatbot"
 version = "0.1.0"
 description = "Dataquartz AI with Local MCP Scraper and Cal.com integration"
