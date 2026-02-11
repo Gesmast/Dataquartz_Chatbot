@@ -1,5 +1,5 @@
 # mcp_server.py
-import requests
+
 from bs4 import BeautifulSoup
 import re
 from fastmcp import FastMCP
