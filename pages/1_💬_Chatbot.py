@@ -1,171 +1,143 @@
 import streamlit as st
 import asyncio
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+import threading
+from contextlib import AsyncExitStack
 from pathlib import Path
-
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
-from langgraph.prebuilt import create_react_agent
-from langchain_mcp_adapters.tools import load_mcp_tools
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from langchain_core.tools import StructuredTool
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langgraph.prebuilt import create_react_agent
+from langchain_groq import ChatGroq
+from langchain_core.messages import HumanMessage
 
 # Project Imports
 from database import create_new_session, save_message, get_chat_history
-from Calmcp import get_available_slots, create_cal_booking
 
-# --- CONFIGURATION ---
+# --- 1. ASSETS & UI CONSTANTS ---
+PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
+DQ_LOGO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/dq_logo_transparent.png"
+AI_AVATAR = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/Gemini_Generated_Image_sinrf3sinrf3sinr.png"
+USER_AVATAR = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/Untitled%20design%20(1).png"
+BG_VIDEO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/quartz_background.mp4"
+SYSTEM_PROMPT_FILE = "SystemPrompt.txt"
 LLM_MODEL = "llama-3.3-70b-versatile"
-SYSTEM_PROMPT_FILE = "SystemPrompt.txt"  # File in same repo directory
 
+# --- 2. THE BACKGROUND LOOP MANAGER (THE BRAIN) ---
+class AsyncAppCore:
+    def __init__(self):
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self._run_loop, daemon=True)
+        self.thread.start()
+        self.exit_stack = AsyncExitStack()
+        self.tools = []
 
-# --- HELPER FUNCTIONS ---
-def load_system_prompt() -> str:
-    """Load system prompt from file in the repository."""
-    try:
-        # Get the directory where this script is located
-        script_dir = Path(__file__).parent
-        prompt_path = script_dir / SYSTEM_PROMPT_FILE
-        
-        if prompt_path.exists():
-            return prompt_path.read_text(encoding='utf-8').strip()
-        else:
-            st.error(f"System prompt file not found: {SYSTEM_PROMPT_FILE}")
-            return "You are the Dataquartz AI assistant."
-    except Exception as e:
-        st.error(f"Error loading system prompt: {e}")
-        return "You are the Dataquartz AI assistant."
+    def _run_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
 
+    def run_coro(self, coro):
+        future = asyncio.run_coroutine_threadsafe(coro, self.loop)
+        return future.result()
 
-def get_cal_tools():
-    """Create LangChain tools for Cal.com integration."""
-    return [
-        StructuredTool.from_function(
-            coroutine=get_available_slots,
-            name="get_available_slots",
-            description="Finds open booking times for a specific date (YYYY-MM-DD format)."
-        ),
-        StructuredTool.from_function(
-            coroutine=create_cal_booking,
-            name="create_cal_booking",
-            description="Books a meeting. Requires email, name, and start_time (ISO format)."
-        )
-    ]
-
-
-@asynccontextmanager
-async def mcp_session() -> AsyncGenerator[ClientSession, None]:
-    """Context manager for MCP server connection."""
-    server_params = StdioServerParameters(
-        command="python",
-        args=["mcp_server.py"],
-    )
-    
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
+    async def _setup_servers(self):
+        # Local Server Configurations (Scraper and Calendar)
+        server_configs = [
+            StdioServerParameters(command="python", args=["mcp_server.py"]),
+            StdioServerParameters(command="python", args=["Calmcp.py"])
+        ]
+        for config in server_configs:
+            read, write = await self.exit_stack.enter_async_context(stdio_client(config))
+            session = await self.exit_stack.enter_async_context(ClientSession(read, write))
             await session.initialize()
-            yield session
+            mcp_tools = await load_mcp_tools(session)
+            self.tools.extend(mcp_tools)
+        return self.tools
 
+# --- 3. PAGE CONFIG & STYLING ---
+st.set_page_config(page_title="Dataquartz AI", page_icon=PAGE_ICON, layout="centered")
 
-async def get_mcp_tools() -> list:
-    """Load tools from MCP server."""
-    async with mcp_session() as session:
-        return await load_mcp_tools(session)
+st.markdown(f"""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Electrolize&display=swap');
+        .stApp, .stAppViewContainer, .stMain, [data-testid="stHeader"] {{ background: transparent !important; }}
+        #bgVideo {{
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; object-fit: cover; filter: brightness(0.40); pointer-events: none;
+        }}
+        .electro-header {{
+            font-family: 'Electrolize', sans-serif; font-size: 5rem;
+            background: linear-gradient(90deg, #00FFFF, #9D00FF);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-align: center; font-weight: bold; letter-spacing: 5px; margin-top: -10px;
+        }}
+        .sub-header {{
+            font-family: 'Electrolize', sans-serif; color: rgba(255, 255, 255, 0.7);
+            text-align: center; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px;
+        }}
+        .stChatMessage {{ 
+            background: rgba(255, 255, 255, 0.07) !important; 
+            backdrop-filter: blur(15px) !important;
+            border-radius: 20px !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            margin-bottom: 1rem;
+        }}
+        [data-testid="stSidebar"] {{ display: none !important; }}
+    </style>
+    <video autoplay muted loop playsinline id="bgVideo"><source src="{BG_VIDEO}" type="video/mp4"></video>
+""", unsafe_allow_html=True)
 
+# --- 4. INITIALIZATION ---
+def load_system_prompt() -> str:
+    prompt_path = Path(__file__).parent / SYSTEM_PROMPT_FILE
+    return prompt_path.read_text(encoding='utf-8').strip() if prompt_path.exists() else "You are Dataquartz AI."
 
-async def create_agent_with_tools():
-    """Initialize the agent with both MCP and Cal tools."""
-    # Load MCP tools
-    mcp_tools = await get_mcp_tools()
-    
-    # Combine with Cal tools
-    all_tools = mcp_tools + get_cal_tools()
-    
-    # Load system prompt
-    system_prompt = load_system_prompt()
-    
-    # Initialize LLM
-    llm = ChatGroq(model=LLM_MODEL, temperature=0)
-    
-    # Create agent
-    agent = create_react_agent(
-        llm, 
-        tools=all_tools, 
-        state_modifier=system_prompt
-    )
-    
-    return agent
-
-
-async def run_agent(agent, user_message: str) -> str:
-    """Execute the agent with the user message."""
-    # Prepare inputs
-    inputs = {"messages": [HumanMessage(content=user_message)]}
-    
-    # Invoke agent
-    result = await agent.ainvoke(inputs)
-    
-    return result["messages"][-1].content
-
-
-def run_async(coro):
-    """Helper to run async functions in Streamlit."""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    
-    return loop.run_until_complete(coro)
-
-
-# --- SESSION STATE INITIALIZATION ---
-if "agent" not in st.session_state:
-    with st.spinner("Connecting to Knowledge Base MCP..."):
-        try:
-            st.session_state.agent = run_async(create_agent_with_tools())
-        except Exception as e:
-            st.error(f"Failed to initialize agent: {e}")
-            st.stop()
+if "core" not in st.session_state:
+    core = AsyncAppCore()
+    with st.spinner(" "): # Hidden spinner to keep UI clean
+        all_tools = core.run_coro(core._setup_servers())
+        llm = ChatGroq(model=LLM_MODEL, temperature=0, groq_api_key=st.secrets["GROQ_API_KEY"])
+        st.session_state.agent = create_react_agent(llm, tools=all_tools, state_modifier=load_system_prompt())
+        st.session_state.core = core
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = create_new_session("Web Discussion")
     st.session_state.messages = get_chat_history(st.session_state.session_id)
 
+# --- 5. UI BRANDING ---
+st.markdown(f"""
+    <div style="text-align: center; padding-top: 2rem;">
+        <a href="/" target="_self"><img src="{DQ_LOGO}" width="140"></a>
+        <div class="electro-header">CHAT</div>
+        <div class="sub-header">Ask about Dataquartz</div>
+    </div>
+""", unsafe_allow_html=True)
 
-# --- UI RENDERING ---
-st.title("Dataquartz AI")
-
+# --- 6. CHAT DISPLAY & LOGIC ---
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    avatar = USER_AVATAR if msg["role"] == "user" else AI_AVATAR
+    with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
 
-
-# --- CHAT LOGIC ---
-if prompt := st.chat_input("How can I help you today?"):
-    # 1. User Message
+if prompt := st.chat_input("Message Dataquartz AI..."):
+    # User Input
     st.session_state.messages.append({"role": "user", "content": prompt})
     save_message(st.session_state.session_id, "user", prompt)
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=USER_AVATAR):
         st.markdown(prompt)
-    
-    # 2. Agent Execution
-    with st.chat_message("assistant"):
-        with st.spinner("Searching Knowledge Base..."):
+
+    # Assistant Response
+    with st.chat_message("assistant", avatar=AI_AVATAR):
+        with st.spinner(" "): 
             try:
-                # Run agent
-                answer = run_async(run_agent(st.session_state.agent, prompt))
-                
+                # Run the Agent through the Background Thread
+                result = st.session_state.core.run_coro(
+                    st.session_state.agent.ainvoke({"messages": [HumanMessage(content=prompt)]})
+                )
+                answer = result["messages"][-1].content
                 st.markdown(answer)
                 
-                # 3. Save History
+                # Persistence
                 st.session_state.messages.append({"role": "assistant", "content": answer})
                 save_message(st.session_state.session_id, "assistant", answer)
-                
             except Exception as e:
-                error_msg = f"Error: {str(e)}"
-                st.error(error_msg)
-                st.session_state.messages.append({"role": "assistant", "content": error_msg})
-                save_message(st.session_state.session_id, "assistant", error_msg)
+                st.error(f"System Offline: {e}")
