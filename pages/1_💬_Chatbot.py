@@ -67,6 +67,9 @@ def load_system_prompt() -> str:
     else:
         root_dir = current_dir
     prompt_path = root_dir / "prompts" / "SystemPrompt.txt"
+
+    if prompt_path.exists():
+        return prompt_path.read_text(encoding='utf-8').strip()
     # Fallback if file is missing
     return "You are Quartzy, the official AI assistant of Dataquartz. Follow company rules."
 
