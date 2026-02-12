@@ -59,6 +59,9 @@ async def create_cal_booking(name: str, email: str, start_time: str, session_id:
     1. Books on Cal.com
     2. Saves metadata to Supabase for zero-login tracking
     """
+    CAL_API_BASE = st.secrets["CAL_API_BASE"]
+    CAL_API_KEY = st.secrets["CAL_API_KEY"]
+  
     url = f"{CAL_API_BASE}/bookings?apiKey={CAL_API_KEY}"
     payload = {
         "eventTypeId": EVENT_TYPE_ID,
@@ -168,6 +171,7 @@ async def get_booking_by_email(email: str) -> str:
     except Exception as e:
 
         return f"Database error: {str(e)}"
+
 
 
 
