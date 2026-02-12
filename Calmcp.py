@@ -8,6 +8,12 @@ import streamlit as st
 # Initialize the MCP Server
 mcp = FastMCP("Dataquartz Calendar")
 
+  # --- Import base from secrets ---
+    CAL_API_BASE = st.secrets["CAL_API_BASE"]
+    CAL_API_KEY = st.secrets["CAL_API_KEY"]
+    EVENT_TYPE_ID = st.secrets["EVENT_TYPE_ID"]
+    
+
 # --- 1. THE TOOLS ---
 
 @mcp.tool()
@@ -18,11 +24,7 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
     start_hour: 'HH:MM:SS' (Optional, defaults to start of day)
     end_hour: 'HH:MM:SS' (Optional, defaults to end of day)
     """
-    # --- Import base from secrets ---
-    CAL_API_BASE = st.secrets["CAL_API_BASE"]
-    CAL_API_KEY = st.secrets["CAL_API_KEY"]
-    EVENT_TYPE_ID = st.secrets["EVENT_TYPE_ID"]
-    
+  
     url = f"{CAL_API_BASE}/slots"
     
     # We combine the date and the specific hours requested
@@ -168,6 +170,7 @@ async def get_booking_by_email(email: str) -> str:
     except Exception as e:
 
         return f"Database error: {str(e)}"
+
 
 
 
