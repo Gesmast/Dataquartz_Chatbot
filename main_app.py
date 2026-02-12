@@ -1,5 +1,10 @@
 import streamlit as st
 
+  # --- Import base from secrets ---
+CAL_API_BASE = st.secrets["CAL_API_BASE"]
+CAL_API_KEY = st.secrets["CAL_API_KEY"]
+EVENT_TYPE_ID = st.secrets["EVENT_TYPE_ID"]
+
 # --- 1. ASSET LINKS (Direct from Supabase) ---
 PAGE_ICON = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/62249_db-favicon%20(1).png"
 DQ_LOGO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/dq_logo_transparent.png"
