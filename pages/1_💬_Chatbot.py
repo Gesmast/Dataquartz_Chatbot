@@ -72,12 +72,12 @@ if "session_id" not in st.session_state:
 
 if "tools" not in st.session_state:
     st.session_state.tools = [
-        StructuredTool.from_function(func=scrape_dataquartz, name="scrape_dataquartz", description="Search Dataquartz website."),
-        StructuredTool.from_function(coroutine=get_available_slots, name="get_available_slots", description="Check Cal.com availability."),
-        StructuredTool.from_function(coroutine=create_cal_booking, name="create_cal_booking", description="Book meeting. Needs name, email, start_time."),
-        StructuredTool.from_function(coroutine=reschedule_cal_booking, name="reschedule_cal_booking", description="Update booking. Needs booking_id, new_start_time."),
-        StructuredTool.from_function(coroutine=cancel_cal_booking, name="cancel_cal_booking", description="Delete booking. Needs booking_id."),
-        StructuredTool.from_function(coroutine=get_booking_by_email, name="get_booking_by_email", description="Search guest ledger for bookings via email.")
+        StructuredTool.from_function(func=scrape_dataquartz, name="get_company_info", description="Search Dataquartz website."),
+        StructuredTool.from_function(coroutine=get_available_slots, name="available_slots", description="Check Cal.com availability."),
+        StructuredTool.from_function(coroutine=create_cal_booking, name="create_booking", description="Book meeting. Needs name, email, start_time."),
+        StructuredTool.from_function(coroutine=reschedule_cal_booking, name="reschedule", description="Update booking. Needs booking_id, new_start_time."),
+        StructuredTool.from_function(coroutine=cancel_cal_booking, name="cancel_booking", description="Delete booking. Needs booking_id."),
+        StructuredTool.from_function(coroutine=get_booking_by_email, name="get_booking_via_email", description="Search guest ledger for bookings via email.")
     ]
 
 # --- 5. UI BRANDING ---
