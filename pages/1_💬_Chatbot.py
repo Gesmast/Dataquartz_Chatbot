@@ -26,7 +26,7 @@ SYSTEM_PROMPT_FILE = "prompts/SystemPrompt.txt"
 LLM_MODEL = "llama-3.3-70b-versatile"
 
 # --- 2. PAGE CONFIG & STYLING ---
-st.set_page_config(page_title="Dataquartz AI", page_icon=PAGE_ICON, layout="centered")
+st.set_page_config(page_title="Quartzy", page_icon=PAGE_ICON, layout="centered")
 
 st.markdown(f"""
     <style>
@@ -58,12 +58,17 @@ st.markdown(f"""
     <video autoplay muted loop playsinline id="bgVideo"><source src="{BG_VIDEO}" type="video/mp4"></video>
 """, unsafe_allow_html=True)
 
-# --- 3. HELPER FUNCTIONS ---
 def load_system_prompt() -> str:
-    prompt_path = Path(__file__).parent / SYSTEM_PROMPT_FILE
-    if prompt_path.exists():
-        return prompt_path.read_text(encoding='utf-8').strip()
-    return "You are Dataquartz AI. Help users with info and bookings."
+    # 1. Start with the directory of the current script
+    current_dir = Path(__file__).parent
+    # 2. If this script is in the 'pages' subfolder, move up to the root
+    if current_dir.name == "pages":
+        root_dir = current_dir.parent
+    else:
+        root_dir = current_dir
+    prompt_path = root_dir / "prompts" / "SystemPrompt.txt"
+    # Fallback if file is missing
+    return "You are Quartzy, the official AI assistant of Dataquartz. Follow company rules."
 
 # --- 4. INITIALIZATION ---
 if "session_id" not in st.session_state:
