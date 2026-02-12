@@ -6,9 +6,9 @@ from supabase import create_client
 import streamlit as st
 
   # --- Import base from secrets ---
-    CAL_API_BASE = st.secrets["CAL_API_BASE"]
-    CAL_API_KEY = st.secrets["CAL_API_KEY"]
-    EVENT_TYPE_ID = st.secrets["EVENT_TYPE_ID"]
+CAL_API_BASE = st.secrets["CAL_API_BASE"]
+CAL_API_KEY = st.secrets["CAL_API_KEY"]
+EVENT_TYPE_ID = st.secrets["EVENT_TYPE_ID"]
 # Initialize the MCP Server
 mcp = FastMCP("Dataquartz Calendar")
 
@@ -168,6 +168,7 @@ async def get_booking_by_email(email: str) -> str:
     except Exception as e:
 
         return f"Database error: {str(e)}"
+
 
 
 
