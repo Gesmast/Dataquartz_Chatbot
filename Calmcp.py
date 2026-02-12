@@ -54,40 +54,40 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 @mcp.tool()
-async def create_cal_booking(name: str, email: str, start_time: str, session_id: str) -> str:
-    """
-    1. Books on Cal.com
-    2. Saves metadata to Supabase for zero-login tracking
-    """
-    CAL_API_BASE = st.secrets["CAL_API_BASE"]
+async def create_cal_booking(name, email, start_time, session_id):
+    CAL_API_BASE = st.secrets["CAL_API_BASE"] # e.g., https://api.cal.com/v2
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
-  
-    url = f"{CAL_API_BASE}/bookings?apiKey={CAL_API_KEY}"
-    payload = {
-        "eventTypeId": EVENT_TYPE_ID,
-        "start": start_time,
-        "responses": {"name": name, "email": email},
-        "timeZone": "Asia/Karachi"
-    }
+    EVENT_TYPE_ID = int(st.secrets["EVENT_TYPE_ID"]) # Force to Integer
+
+    url = f"{CAL_API_BASE}/bookings"
     
+    headers = {
+        "Authorization": f"Bearer {CAL_API_KEY}",
+        "cal-api-version": "2024-08-13",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "start": start_time,
+        "eventTypeId": EVENT_TYPE_ID,
+        "attendee": {
+            "name": name,
+            "email": email,
+            "timeZone": "Asia/Karachi"
+        },
+        "metadata": {
+            "session_id": session_id
+        }
+    }
+
     async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=payload)
+        response = await client.post(url, headers=headers, json=payload)
         if response.status_code == 201:
-            data = response.json()
-            booking_id = data['booking']['id']
-            
-            # --- THE SUPABASE LOGGING LOGIC ---
-            supabase.table("meetings").insert({
-                "cal_booking_id": booking_id,
-                "user_email": email,
-                "user_name": name,
-                "start_time": start_time,
-                "session_id": session_id,
-                "status": "confirmed"
-            }).execute()
-            
-            return f"Confirmed! Booking ID {booking_id} created for {name}."
-        return f"Error: {response.text}"
+            return response.json()
+        else:
+            # This will show you exactly what is wrong in the 400 error
+            st.error(f"Booking Failed: {response.text}")
+            return None
     
 @mcp.tool()
 async def reschedule_cal_booking(booking_id: int, new_start_time: str) -> str:
@@ -171,6 +171,7 @@ async def get_booking_by_email(email: str) -> str:
     except Exception as e:
 
         return f"Database error: {str(e)}"
+
 
 
 
