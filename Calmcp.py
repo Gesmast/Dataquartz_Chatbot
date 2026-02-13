@@ -21,7 +21,7 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
     end_time: ISO 8601 (e.g., '2026-02-15T23:59:59Z')
     """
     # V2 Endpoint
-    url = "https://api.cal.com/v2/slots/available"
+    url = "https://api.cal.com/v2/slots"
     
     headers = {
         "cal-api-version": "2024-08-13",
@@ -177,6 +177,7 @@ async def get_booking_by_email(email: str) -> str:
     except Exception as e:
 
         return f"Database error: {str(e)}"
+
 
 
 
