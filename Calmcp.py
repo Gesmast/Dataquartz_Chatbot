@@ -105,7 +105,7 @@ async def reschedule_cal_booking(booking_id: int, new_start_time: str) -> str:
     Updates an existing booking on Cal.com and synchronizes the Supabase ledger.
     new_start_time: ISO format 'YYYY-MM-DDTHH:MM:SS'
     """
-    CAL_API_BASE = st.secrets["CAL_API_BASE"]
+    
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
 
     # 1. Update Cal.com (Using PATCH for V1)
@@ -135,11 +135,11 @@ async def cancel_cal_booking(booking_id: int, reason: str = "User requested") ->
     """
     Cancels the booking on Cal.com and REMOVES it from the Supabase guest ledger.
     """
-    CAL_API_BASE = st.secrets["CAL_API_BASE"]
+    
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
 
     # 1. Cancel on Cal.com (V1 uses DELETE or POST to /cancel depending on setup)
-    url = f"{CAL_API_BASE}/bookings/{booking_id}/cancel?apiKey={CAL_API_KEY}"
+    url = 
     payload = {"reason": reason}
 
     async with httpx.AsyncClient() as client:
@@ -188,6 +188,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
