@@ -14,38 +14,46 @@ mcp = FastMCP("Dataquartz Calendar")
 
 @mcp.tool()
 async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour: str = "23:59:59") -> str:
-    """
-    Fetches available booking slots for a specific date and time range.
+  """
+    Fetches truly bookable slots for a specific timeframe.
     date: 'YYYY-MM-DD'
-    start_hour: 'HH:MM:SS' (Optional, defaults to start of day)
-    end_hour: 'HH:MM:SS' (Optional, defaults to end of day)
+    start_time: ISO 8601 (e.g., '2026-02-15T00:00:00Z')
+    end_time: ISO 8601 (e.g., '2026-02-15T23:59:59Z')
     """
-  
-    url = f"{CAL_API_BASE}/slots"
+    # V2 Endpoint
+    url = "https://api.cal.com/v2/slots/available"
     
-    # We combine the date and the specific hours requested
-    # Note: Cal.com API expects UTC or ISO format; we specify the window here.
-    params = {
-        "apiKey": CAL_API_KEY,
-        "eventTypeId": EVENT_TYPE_ID,
-        "startTime": f"{date}T{start_hour}Z",
-        "endTime": f"{date}T{end_hour}Z",
+    headers = {
+        "cal-api-version": "2024-08-13",
+        "Authorization": f"Bearer {st.secrets['CAL_API_KEY']}",
+        "Content-Type": "application/json"
     }
-    
+
+    params = {
+        "eventTypeId": int(st.secrets["EVENT_TYPE_ID"]),
+        "startTime": start_time,
+        "endTime": end_time,
+    }
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        data = response.json()
+        response = await client.get(url, headers=headers, params=params)
         
-        slots = data.get("slots", {})
-        day_slots = slots.get(date, [])
+        if response.status_code != 200:
+            return f"Error {response.status_code}: {response.text}"
+            
+        data = response.json()
+        # V2 response structure: data -> slots -> {date}
+        slots_data = data.get("data", {}).get("slots", {})
+        
+        # Pull slots for the requested date
+        day_slots = slots_data.get(date, [])
         
         if not day_slots:
-            return f"I couldn't find any open slots between {start_hour} and {end_hour} on {date}."
-        
-        # Format slots for the AI (e.g., 14:30)
-        times = [s['time'].split('T')[1][:5] for s in day_slots]
-        return f"Available slots for {date} from {start_hour[:5]} to {end_hour[:5]}: " + ", ".join(times)
+            return f"No available slots found on {date} between those times."
 
+        # Extract times (e.g., '15:00') for the chatbot to evaluate
+        times = [s['time'].split('T')[1][:5] for s in day_slots]
+        return f"Available bookable slots on {date}: " + ", ".join(times)
 
 
 # Initialize Supabase (using your existing secrets)
@@ -169,6 +177,7 @@ async def get_booking_by_email(email: str) -> str:
     except Exception as e:
 
         return f"Database error: {str(e)}"
+
 
 
 
