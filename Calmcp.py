@@ -68,7 +68,7 @@ async def create_cal_booking(name, email, start_time, session_id):
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
     EVENT_TYPE_ID = int(st.secrets["EVENT_TYPE_ID"])  # Force to Integer
 
-    url ="https://api.cal.com/v2/bookings"
+    url =f'https://api.cal.com/v2/bookings'
 
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
@@ -188,6 +188,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
