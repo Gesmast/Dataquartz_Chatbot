@@ -72,7 +72,7 @@ async def create_cal_booking(name, email, start_time, session_id):
 
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
-        "cal-api-version": "2024-09-04",
+        "cal-api-version": "2024-08-13",
         "Content-Type": "application/json"
     }
 
@@ -188,6 +188,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
