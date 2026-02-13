@@ -81,7 +81,6 @@ async def create_cal_booking(name, email, start_time, session_id):
         "attendee": {
             "name": name,
             "email": email,
-            "timeZone": "Asia/Karachi"
         },
         "metadata": {
             "session_id": session_id
@@ -187,6 +186,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
