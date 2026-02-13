@@ -23,7 +23,7 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
     url = "https://api.cal.com/v2/slots"
 
     headers = {
-        "cal-api-version": "2024-08-13",
+        "cal-api-version": "2024-09-04",
         "Authorization": f"Bearer {st.secrets['CAL_API_KEY']}",
         "Content-Type": "application/json"
     }
@@ -31,10 +31,11 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
     start_time = f"{date}T{start_hour}Z"
     end_time = f"{date}T{end_hour}Z"
 
-    params = {
+   params = {
         "eventTypeId": int(st.secrets["EVENT_TYPE_ID"]),
-        "startTime": start_time,
-        "endTime": end_time,
+        "start":start_time,           
+        "end":end_time,             
+        "timeZone": "Asia/Karachi" 
     }
 
     async with httpx.AsyncClient() as client:
@@ -187,3 +188,4 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
