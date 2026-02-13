@@ -64,15 +64,15 @@ supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 @mcp.tool()
 async def create_cal_booking(name, email, start_time, session_id):
-    CAL_API_BASE = st.secrets["CAL_API_BASE"]  # e.g., https://api.cal.com/v2
+    
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
     EVENT_TYPE_ID = int(st.secrets["EVENT_TYPE_ID"])  # Force to Integer
 
-    url = f"{CAL_API_BASE}/bookings"
+    url ="https://api.cal.com/v2/bookings"
 
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
-        "cal-api-version": "2024-08-13",
+        "cal-api-version": "2024-09-04",
         "Content-Type": "application/json"
     }
 
@@ -188,5 +188,6 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
