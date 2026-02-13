@@ -139,7 +139,7 @@ async def cancel_cal_booking(booking_id: int, reason: str = "User requested") ->
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
 
     # 1. Cancel on Cal.com (V1 uses DELETE or POST to /cancel depending on setup)
-    url = 
+    url =f"https://api.cal.com/v2/bookings/{booking_uid}/cancel"
     payload = {"reason": reason}
 
     async with httpx.AsyncClient() as client:
@@ -188,6 +188,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
