@@ -109,7 +109,7 @@ async def reschedule_cal_booking(booking_id: int, new_start_time: str) -> str:
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
 
     # 1. Update Cal.com (Using PATCH for V1)
-    url = f"{CAL_API_BASE}/bookings/{booking_id}?apiKey={CAL_API_KEY}"
+    url = f"https://api.cal.com/v2/bookings/{booking_uid}/reschedule"
     payload = {
         "start": new_start_time,
         "timeZone": "Asia/Karachi"
@@ -188,6 +188,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
