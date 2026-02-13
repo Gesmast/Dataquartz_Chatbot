@@ -31,7 +31,7 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
     start_time = f"{date}T{start_hour}Z"
     end_time = f"{date}T{end_hour}Z"
 
-   params = {
+    params = {
         "eventTypeId": int(st.secrets["EVENT_TYPE_ID"]),
         "start":start_time,           
         "end":end_time,             
@@ -188,4 +188,5 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
