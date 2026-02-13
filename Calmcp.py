@@ -35,7 +35,6 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
         "eventTypeId": int(st.secrets["EVENT_TYPE_ID"]),
         "start":start_time,           
         "end":end_time,             
-        "timeZone": "Asia/Karachi" 
     }
 
     async with httpx.AsyncClient() as client:
@@ -188,6 +187,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
