@@ -1,6 +1,7 @@
 import streamlit as st
 
-  # --- Import base from secrets ---
+# Automatically grab the IANA timezone string from the user's browser
+detected_tz = st.context.timezone
 
 
 # --- 1. ASSET LINKS (Direct from Supabase) ---
