@@ -5,6 +5,9 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
 from langchain_core.tools import StructuredTool
 
+# Automatically grab the IANA timezone string from the user's browser
+detected_tz = st.context.timezone
+
 # --- PROJECT IMPORTS ---
 from mcp_server import scrape_dataquartz 
 from Calmcp import (
@@ -98,7 +101,17 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 6. CHAT LOGIC ---
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {
+            "role": "system", 
+            "content": f"The user's detected timezone is {detected_tz}. When booking, use this timezone."
+        }
+    ]
+
 for msg in st.session_state.messages:
+    if msg["role"] == "system":
+        continue
     avatar = USER_AVATAR if msg["role"] == "user" else AI_AVATAR
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
