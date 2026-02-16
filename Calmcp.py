@@ -62,7 +62,15 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 @mcp.tool()
-async def create_cal_booking(name, email, start_time, session_id):
+async def create_cal_booking(name, email, start_time, session_id, detected_tz: str):
+
+    """
+    Creates a new booking on Cal.com using the attendee's detected timezone.
+    - name: Attendee's full name.
+    - email: Attendee's email address.
+    - start_time: ISO 8601 string (e.g., '2026-02-15T14:30:00Z').
+    - detected_tz: The attendee's browser timezone (e.g., 'America/New_York').
+    """
     
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
     EVENT_TYPE_ID = int(st.secrets["EVENT_TYPE_ID"])  # Force to Integer
@@ -78,9 +86,12 @@ async def create_cal_booking(name, email, start_time, session_id):
     payload = {
         "start": start_time,
         "eventTypeId": EVENT_TYPE_ID,
+        "username": st.secrets["cal_username"],
         "attendee": {
             "name": name,
             "email": email,
+            "timeZone": detected_tz,
+            "language": "en"
         },
         "metadata": {
             "session_id": session_id
@@ -186,6 +197,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
