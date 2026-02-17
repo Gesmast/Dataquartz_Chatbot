@@ -13,13 +13,13 @@ mcp = FastMCP("Dataquartz Calendar")
 # --- 1. THE TOOLS ---
 
 @mcp.tool()
-async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour: str = "23:59:59") -> str:
-    """
-    Fetches truly bookable slots for a specific timeframe.
-    date: 'YYYY-MM-DD'
-    start_time: ISO 8601 (e.g., '2026-02-15T00:00:00Z')
-    end_time: ISO 8601 (e.g., '2026-02-15T23:59:59Z')
-    """
+async def get_available_slots(date: str, start_hour: str, end_time: str, detected_tz: str) -> str:
+   """
+    Fetches available slots for a specific timeframe.
+    - date: 'YYYY-MM-DD'
+    - start_time: ISO 8601 string for search start (e.g., '2026-02-15T09:00:00Z')
+    - end_time: ISO 8601 string for search end (e.g., '2026-02-15T09:30:00Z')
+   """
     url = "https://api.cal.com/v2/slots"
 
     headers = {
@@ -33,8 +33,9 @@ async def get_available_slots(date: str, start_hour: str = "00:00:00", end_hour:
 
     params = {
         "eventTypeId": int(st.secrets["EVENT_TYPE_ID"]),
+        "eventTypeSlug": "connect-with-dataquartz",
         "start":start_time,           
-        "end":end_time,             
+        "end":end_time,
     }
 
     async with httpx.AsyncClient() as client:
@@ -197,6 +198,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
