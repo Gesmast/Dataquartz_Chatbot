@@ -13,7 +13,7 @@ mcp = FastMCP("Dataquartz Calendar")
 # --- 1. THE TOOLS ---
 
 @mcp.tool()
-async def get_available_slots(date: str, start_hour: str, end_time: str, detected_tz: str) -> str:
+async def get_available_slots(date: str, start_hour: str, end_hour: str, detected_tz: str) -> str:
     """
     Fetches available slots for a specific timeframe.
     - date: 'YYYY-MM-DD'
@@ -196,6 +196,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
