@@ -20,7 +20,7 @@ async def get_available_slots(date: str, start_hour: str, end_hour: str) -> str:
     - start_time: ISO 8601 string for search start (e.g., '2026-02-15T09:00:00Z')
     - end_time: ISO 8601 string for search end (e.g., '2026-02-15T09:30:00Z')
     """
-    url = "https://api.cal.com/v2/slots"
+    url = f"https://api.cal.com/v2/slots"
     
     headers = {
         "cal-api-version": "2024-09-04",
@@ -74,7 +74,7 @@ async def create_cal_booking(name, email, start_time, session_id):
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
     EVENT_TYPE_ID = int(st.secrets["EVENT_TYPE_ID"])  # Force to Integer
 
-    url ="https://api.cal.com/v2/bookings"
+    url =f"https://api.cal.com/v2/bookings"
 
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
@@ -107,7 +107,7 @@ async def create_cal_booking(name, email, start_time, session_id):
 
 
 @mcp.tool()
-async def reschedule_cal_booking(booking_id: int, new_start_time: str) -> str:
+async def reschedule_cal_booking(bookingUid: int, new_start_time: str) -> str:
     """
     Updates an existing booking on Cal.com and synchronizes the Supabase ledger.
     new_start_time: ISO format 'YYYY-MM-DDTHH:MM:SS'
@@ -116,10 +116,9 @@ async def reschedule_cal_booking(booking_id: int, new_start_time: str) -> str:
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
 
     # 1. Update Cal.com (Using PATCH for V1)
-    url = f"https://api.cal.com/v2/bookings/{booking_uid}/reschedule"
+    url = f"https://api.cal.com/v2/bookings/{bookingUid}/reschedule"
     payload = {
         "start": new_start_time,
-        "timeZone": "Asia/Karachi"
     }
 
     async with httpx.AsyncClient() as client:
@@ -129,16 +128,16 @@ async def reschedule_cal_booking(booking_id: int, new_start_time: str) -> str:
             try:
                 supabase.table("meetings") \
                     .update({"start_time": new_start_time, "status": "rescheduled"}) \
-                    .eq("cal_booking_id", booking_id) \
+                    .eq("cal_booking_id", bookingUid) \
                     .execute()
-                return f"Successfully rescheduled meeting {booking_id} to {new_start_time} (PKT)."
+                return f"Successfully rescheduled meeting {bookingUid} to {new_start_time}."
             except Exception as e:
                 return f"Rescheduled on Cal.com, but Supabase sync failed: {str(e)}"
         return f"Cal.com reschedule error: {response.text}"
 
 
 @mcp.tool()
-async def cancel_cal_booking(booking_id: int, reason: str = "User requested") -> str:
+async def cancel_cal_booking(bookingUid: int, reason: str) -> str:
     """
     Cancels the booking on Cal.com and REMOVES it from the Supabase guest ledger.
     """
@@ -146,8 +145,8 @@ async def cancel_cal_booking(booking_id: int, reason: str = "User requested") ->
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
 
     # 1. Cancel on Cal.com (V1 uses DELETE or POST to /cancel depending on setup)
-    url =f"https://api.cal.com/v2/bookings/{booking_uid}/cancel"
-    payload = {"reason": reason}
+    url =f"https://api.cal.com/v2/bookings/{bookingUid}/cancel"
+    payload = {"cancellationReason": reason}
 
     async with httpx.AsyncClient() as client:
         # V1 typically uses DELETE for cancellation as per docs
@@ -158,9 +157,9 @@ async def cancel_cal_booking(booking_id: int, reason: str = "User requested") ->
             try:
                 supabase.table("meetings") \
                     .delete() \
-                    .eq("cal_booking_id", booking_id) \
+                    .eq("cal_booking_id", bookingUid) \
                     .execute()
-                return f"Booking {booking_id} has been cancelled and removed from our records."
+                return f"Booking {bookingUid} has been cancelled and removed from our records."
             except Exception as e:
                 return f"Cancelled on Cal.com, but failed to remove from database: {str(e)}"
         return f"Cal.com cancellation error: {response.text}"
@@ -195,6 +194,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
