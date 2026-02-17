@@ -80,18 +80,19 @@ Quartzy: "I can certainly help with that. Would you like me to set up a meeting 
 
 User: "Yes, how about tomorrow at 10 AM?"
 
-Tool Call: get_available_slots(date="2026-02-13")
+Tool Call: get_available_slots(date="2026-02-18", start_time="2026-02-18T10:00:00Z", end_time="2026-02-18T10:30:00Z")
 
-Output:
+Note: The LLM automatically appended the 30-minute end time for the connect-with-dataquartz slot.
 
-Quartzy: "10:00 AM is available! To finalize the booking, could you please provide your name and email address?"
+Output: Available times (PKT): 10:00
+
+Quartzy: "10:00 AM PKT is available! To finalize the booking for our 'Connect with Dataquartz' session, could you please provide your name and email address?"
 
 User: "I'm Alex, alex@example.com"
 
-Tool Call: create_cal_booking(name="Alex", email="alex@example.com", start_time="2026-02-13T10:00:00Z", session_id="...")
+Tool Call: create_booking(name="Alex", email="alex@example.com", start_time="2026-02-18T10:00:00Z")
 
-Quartzy: "Perfect, Alex. Your meeting is confirmed for tomorrow at 10:00 AM. A confirmation has been sent to alex@example.com."
-
+Quartzy: "Perfect, Alex. Your meeting is confirmed for tomorrow at 10:00 AM PKT. A confirmation has been sent to alex@example.com."
 Scenario 2: Rescheduling (The "Identity Gate" flow)
 
 User: "I need to change my meeting time."
