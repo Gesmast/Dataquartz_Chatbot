@@ -22,7 +22,7 @@ async def get_available_slots(date: str, start_hour: str, end_time: str, detecte
    """
    url = "https://api.cal.com/v2/slots"
 
-    headers = {
+   headers = {
         "cal-api-version": "2024-09-04",
         "Authorization": f"Bearer {st.secrets['CAL_API_KEY']}",
         "Content-Type": "application/json"
@@ -196,6 +196,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
