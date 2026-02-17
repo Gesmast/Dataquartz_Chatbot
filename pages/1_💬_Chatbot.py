@@ -146,7 +146,7 @@ if prompt := st.chat_input("How can I help you today?"):
                         observation = scrape_dataquartz(**t_args)
                     else:
                         selected_tool = next(t for t in st.session_state.tools if t.name == t_name)
-                        if t_name == "create_booking":
+                        if t_name == "create_cal_booking":
                             t_args["session_id"] = st.session_state.session_id
                         # Executing async MCP tools via sync bridge
                         observation = asyncio.run(selected_tool.ainvoke(t_args))
