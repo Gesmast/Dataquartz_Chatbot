@@ -94,6 +94,7 @@ async def create_cal_booking(name, email, start_time, session_id, detected_tz: s
             "timeZone": detected_tz,
             "language": "en"
         }
+    }
     
 
     async with httpx.AsyncClient() as client:
@@ -195,6 +196,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
