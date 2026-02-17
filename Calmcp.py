@@ -69,8 +69,8 @@ async def create_cal_booking(name, email, start_time, session_id, detected_tz: s
     Creates a new booking on Cal.com using the attendee's detected timezone.
     - name: Attendee's full name.
     - email: Attendee's email address.
-    - start_time: ISO 8601 string (e.g., '2026-02-15T14:30:00Z').
-    - detected_tz: The attendee's browser timezone (e.g., 'America/New_York').
+    - start_time: ISO 8601 string in UTC timezone(e.g., '2026-02-15T14:30:00Z').
+    - detected_tz: The attendee's browser timezone .
     """
     
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
@@ -87,17 +87,15 @@ async def create_cal_booking(name, email, start_time, session_id, detected_tz: s
     payload = {
         "start": start_time,
         "eventTypeId": EVENT_TYPE_ID,
+        "eventTypeSlug": "connect-with-dataquartz",
         "username": st.secrets["cal_username"],
         "attendee": {
             "name": name,
             "email": email,
             "timeZone": detected_tz,
             "language": "en"
-        },
-        "metadata": {
-            "session_id": session_id
         }
-    }
+    
 
     async with httpx.AsyncClient() as client:
         response = await client.post(url, headers=headers, json=payload)
@@ -198,6 +196,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
