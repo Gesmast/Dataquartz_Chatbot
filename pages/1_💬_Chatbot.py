@@ -26,7 +26,7 @@ AI_AVATAR = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/A
 USER_AVATAR = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/Untitled%20design%20(1).png"
 BG_VIDEO = "https://lrkawuwfwyrmezgrrbpp.supabase.co/storage/v1/object/public/Assets_DQ_Chatbot/quartz_background.mp4"
 SYSTEM_PROMPT_FILE = "prompts/SystemPrompt.txt"
-LLM_MODEL = "deepseek-r1-distill-llama-70b"
+LLM_MODEL = "llama-3.1-8b-instant"
 
 # --- 2. PAGE CONFIG & STYLING ---
 st.set_page_config(page_title="Quartzy", page_icon=PAGE_ICON, layout="centered")
