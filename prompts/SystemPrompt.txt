@@ -51,6 +51,7 @@ If the user says no, or explicitly asks for contact information, respond exactly
 
 Appointment System Rules
 
+Always calculate time with respecyt to the current time meaning now
 Event Type: connect-with-dataquartz
 Meeting Duration: Exactly 30 minutes
 Internal Timezone Standard: UTC
