@@ -64,8 +64,7 @@ supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 @mcp.tool()
 async def create_cal_booking(name, email, start_time, session_id, detected_tz: str):
-
-    """
+   """
     Creates a new booking on Cal.com using the attendee's detected timezone.
     - name: Attendee's full name.
     - email: Attendee's email address.
@@ -76,7 +75,7 @@ async def create_cal_booking(name, email, start_time, session_id, detected_tz: s
     CAL_API_KEY = st.secrets["CAL_API_KEY"]
     EVENT_TYPE_ID = int(st.secrets["EVENT_TYPE_ID"])  # Force to Integer
 
-    url =f'https://api.cal.com/v2/bookings'
+    url ="https://api.cal.com/v2/bookings"
 
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
@@ -196,6 +195,7 @@ async def get_booking_by_email(email: str) -> str:
 
     except Exception as e:
         return f"Database error: {str(e)}"
+
 
 
 
