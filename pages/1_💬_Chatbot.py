@@ -134,37 +134,36 @@ if prompt := st.chat_input("How can I help you today?"):
                 history.append(role(content=m["content"]))
 
             # STEP 1: Process Request
-            
             response = llm_with_tools.invoke(history)
             
             # STEP 2: Tool Routing
-            
             if response.tool_calls:
+                history.append(response) # Add the AI's intent to call tools
                 for tool_call in response.tool_calls:
-                    # These are unique to the CURRENT tool call in the list
                     t_name = tool_call["name"]
                     t_args = tool_call["args"]
                     
-                    # We must find the tool object that matches this specific name
                     selected_tool = next(t for t in st.session_state.tools if t.name == t_name)
                     
-                    # If this specific tool is 'create_booking', add the session ID [cite: 18]
                     if t_name == "create_booking":
                         t_args["session_id"] = st.session_state.session_id
                     
-                    # Execute this specific tool based on its type (Async vs Sync)
+                    # Execute tool
                     if asyncio.iscoroutinefunction(selected_tool.func):
                         observation = asyncio.run(selected_tool.ainvoke(t_args))
                     else:
                         observation = selected_tool.invoke(t_args)
-                           # STEP 3: Generate Final Answer
-                        history.append(response)
-                        history.append(ToolMessage(content=str(observation), tool_call_id=tool_call["id"]))
-                    final_answer = llm.invoke(history).content
-                
-                else:
-                    final_answer = response.content
+
+                    # Add result to history inside the loop
+                    history.append(ToolMessage(content=str(observation), tool_call_id=tool_call["id"]))
+
+                # STEP 3: Generate Final Answer (OUTSIDE the loop, but inside the tool 'if')
+                final_answer = llm.invoke(history).content
+            else:
+                # No tools were called, just use the direct text
+                final_answer = response.content
             
-                st.markdown(final_answer)
-                st.session_state.messages.append({"role": "assistant", "content": final_answer})
-                save_message(st.session_state.session_id, "assistant", final_answer)
+            # --- FINAL DISPLAY (Outside all if/else blocks) ---
+            st.markdown(final_answer)
+            st.session_state.messages.append({"role": "assistant", "content": final_answer})
+            save_message(st.session_state.session_id, "assistant", final_answer)
