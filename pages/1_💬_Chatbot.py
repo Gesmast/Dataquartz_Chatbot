@@ -139,7 +139,7 @@ if prompt := st.chat_input("How can I help you today?"):
             
             # STEP 2: Tool Routing
             
-  if response.tool_calls:
+if response.tool_calls:
     for tool_call in response.tool_calls:
         # These are unique to the CURRENT tool call in the list
         t_name = tool_call["name"]
@@ -157,13 +157,18 @@ if prompt := st.chat_input("How can I help you today?"):
             observation = asyncio.run(selected_tool.ainvoke(t_args))
         else:
             observation = selected_tool.invoke(t_args)
-            
-                # STEP 3: Generate Final Answer
-                history.append(response)
-                history.append(ToolMessage(content=str(observation), tool_call_id=tool_call["id"]))
-                final_answer = llm.invoke(history).content
-            else:
-                final_answer = response.content
+               # STEP 3: Generate Final Answer
+            history.append(response)
+            history.append(ToolMessage(content=str(observation), tool_call_id=tool_call["id"]))
+        final_answer = llm.invoke(history).content
+    
+    else:
+        final_answer = response.content
+
+    st.markdown(final_answer)
+    st.session_state.messages.append({"role": "assistant", "content": final_answer})
+    save_message(st.session_state.session_id, "assistant", final_answer)
+
 
             st.markdown(final_answer)
             st.session_state.messages.append({"role": "assistant", "content": final_answer})
