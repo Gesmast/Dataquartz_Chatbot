@@ -139,24 +139,24 @@ if prompt := st.chat_input("How can I help you today?"):
             
             # STEP 2: Tool Routing
             
-           if response.tool_calls:
-    for tool_call in response.tool_calls:
-        t_name = tool_call["name"]
-        t_args = tool_call["args"]
+    if response.tool_calls:
+        for tool_call in response.tool_calls:
+            t_name = tool_call["name"]
+            t_args = tool_call["args"]
         
         # 1. Dynamically find the tool in your st.session_state.tools list
-        selected_tool = next(t for t in st.session_state.tools if t.name == t_name)
+            selected_tool = next(t for t in st.session_state.tools if t.name == t_name)
         
         # 2. Inject internal metadata if the tool is 'create_booking'
-        if t_name == "create_booking":
-            t_args["session_id"] = st.session_state.session_id
+            if t_name == "create_booking":
+                t_args["session_id"] = st.session_state.session_id
         
         # 3. Handle both Async (MCP/Cal) and Sync (Scraper) execution
         # check if it's a coroutine function (async) or a standard function (sync)
-        if asyncio.iscoroutinefunction(selected_tool.func):
-            observation = asyncio.run(selected_tool.ainvoke(t_args))
-        else:
-            observation = selected_tool.invoke(t_args)
+            if asyncio.iscoroutinefunction(selected_tool.func):
+                observation = asyncio.run(selected_tool.ainvoke(t_args))
+            else:
+                observation = selected_tool.invoke(t_args)
             
                 # STEP 3: Generate Final Answer
                 history.append(response)
