@@ -83,12 +83,12 @@ if "session_id" not in st.session_state:
 
 if "tools" not in st.session_state:
     st.session_state.tools = [
-        StructuredTool.from_function(func=scrape_dataquartz, name="get_company_info", description="Search Dataquartz website."),
-        StructuredTool.from_function(coroutine=get_available_slots, name="available_slots", description="Check Cal.com availability."),
-        StructuredTool.from_function(coroutine=create_cal_booking, name="create_booking", description="Book meeting. Needs name, email, start_time."),
-        StructuredTool.from_function(coroutine=reschedule_cal_booking, name="reschedule_booking", description="Update booking. Needs booking_id, new_start_time."),
-        StructuredTool.from_function(coroutine=cancel_cal_booking, name="cancel_booking", description="Delete booking. Needs booking_id."),
-        StructuredTool.from_function(coroutine=get_booking_by_email, name="get_booking_via_email", description="Search guest ledger for bookings via email.")
+        StructuredTool.from_function(func=scrape_dataquartz, name="get_company_info", description="Searches the Dataquartz website to extract information relevant to a user's query."),
+        StructuredTool.from_function(coroutine=get_available_slots, name="available_slots", description="Checks for open meeting times. It requires a date, a start_time, and an end_time (which you must calculate as 30 minutes after the start)."),
+        StructuredTool.from_function(coroutine=create_cal_booking, name="create_booking", description="Schedules a new appointment. It requires the attendee's name, email, and the start_time in ISO format."),
+        StructuredTool.from_function(coroutine=reschedule_cal_booking, name="reschedule_booking", description="Updates an existing meeting to a new_start_time and syncs the records."),
+        StructuredTool.from_function(coroutine=cancel_cal_booking, name="cancel_booking", description="Cancels an appointment and removes the record from the guest ledger needs the bookingUid"),
+        StructuredTool.from_function(coroutine=get_booking_by_email, name="get_booking_via_email", description="Retrieves existing booking details from the database using the guest's email address.")
     ]
 
 # --- 5. UI BRANDING ---
