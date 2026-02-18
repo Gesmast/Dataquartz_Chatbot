@@ -135,7 +135,7 @@ if prompt := st.chat_input("How can I help you today?"):
 
             # STEP 1: Process Request
             
-            response = llm_with_tools.invoke(history)
+response = llm_with_tools.invoke(history)
             
             # STEP 2: Tool Routing
             
