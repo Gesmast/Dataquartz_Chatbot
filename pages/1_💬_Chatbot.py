@@ -168,8 +168,3 @@ if response.tool_calls:
     st.markdown(final_answer)
     st.session_state.messages.append({"role": "assistant", "content": final_answer})
     save_message(st.session_state.session_id, "assistant", final_answer)
-
-
-            st.markdown(final_answer)
-            st.session_state.messages.append({"role": "assistant", "content": final_answer})
-            save_message(st.session_state.session_id, "assistant", final_answer)
