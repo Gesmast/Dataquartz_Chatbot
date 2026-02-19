@@ -152,7 +152,7 @@ if prompt := st.chat_input("How can I help you today?"):
                     if asyncio.iscoroutinefunction(selected_tool.func):
                         observation = asyncio.run(selected_tool.ainvoke(t_args))
                     else:
-                        observation = selected_tool.invoke(t_args)
+                        observation = selected_tool.ainvoke(t_args)
 
                     # Add result to history inside the loop
                     history.append(ToolMessage(content=str(observation), tool_call_id=tool_call["id"]))
